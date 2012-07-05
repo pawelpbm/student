@@ -1,0 +1,44 @@
+{% extends "main.html" %}
+{% block left %}
+<h2>Dodawanie uprawnień</h2>
+<form class="form-stacked" action="/account/repositories/add" method="post">{% csrf_token %}
+{{ form.non_field_errors }}
+	<fieldset>	
+		<div class="clearfix {% if form.username.errors %}error{% endif%}">
+			<label>Nazwa użytkownika</label>
+			<div class="input {% if form.username.errors %}error{% endif%}">
+				{{ form.username }}
+				{% if form.username.errors %}
+					<span class="help-inline">{% for error in form.username.errors %}{{ error }}{%endfor%}</span>
+				{% endif%}
+			</div>
+		</div>
+
+		<div class="clearfix {% if form.reponame.errors %}error{% endif%}">
+			<label>Repozytorium</label>
+			<div class="input {% if form.reponame.errors %}error{% endif%}">
+				{{form.reponame}}
+				{% if form.reponame.errors %}
+					<span class="help-inline">{% for error in form.reponame.errors %}{{ error }}{%endfor%}</span>
+				{% endif%}
+			</div>
+		</div>
+
+		<div class="clearfix {% if form.permissions.errors %}error{% endif%}">
+			<label>Uprawnienia</label>
+			<div class="input {% if form.permissions.errors %}error{% endif%}">
+				{{form.permissions}}
+				{% if form.permissions.errors %}
+					<span class="help-inline">{% for error in form.permissions.errors %}{{ error }}{%endfor%}</span>
+				{% endif%}
+			</div>
+		</div>
+		
+		<div class="clearfix">
+			<div class="input">
+				<input class="btn primary" id="registration-button" type="submit" value="Dodaj uprawnienia" />
+			</div>
+		</div>
+	</fieldset>
+</form>
+{% endblock %}

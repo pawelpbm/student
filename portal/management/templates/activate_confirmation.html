@@ -1,0 +1,31 @@
+{% extends "admin/base_site.html" %}
+{% load i18n l10n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+     <a href="../../">{% trans "Home" %}</a> &rsaquo;
+     <a href="../">{{ app_label|capfirst }}</a> &rsaquo;
+     <a href="./">{{ opts.verbose_name_plural|capfirst }}</a> &rsaquo;
+      Aktywacja użytkowników
+</div>
+{% endblock %}
+
+{% block content %}
+    <p>Czy na pewno aktywować poniższych użytkowników tymczasowych? Nie dokonali oni potwierdzenia adresu mailowego.</p>
+    <ul>
+    {% for deletable_object in deletable_objects %}
+        <li>{{ deletable_object }}</li>
+    {% endfor %}
+    </ul>
+    <ul>{{ deletable_object|unordered_list }}</ul>
+    
+    <form action="" method="post">{% csrf_token %}
+    <div>
+    {% for obj in queryset %}
+    <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk }}" />
+    {% endfor %}
+    <input type="hidden" name="action" value="activate" />
+    <input type="submit" name="apply_update" value="Tak, aktywuj"  />
+    </div>
+    </form>
+{% endblock %}

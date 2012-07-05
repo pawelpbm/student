@@ -1,0 +1,78 @@
+{% extends "main.html" %}
+
+{% block left %}
+<h2>Repozytoria</h2>
+<a class="btn" href="/account/repositories/add">Dodaj uprawnienia do repozytorium</a><br><br>
+{% if err %}
+<div class="alert alert-error alert-block">
+  <a class="close" data-dismiss="alert">×</a>
+  <h4 class="alert-heading">Uwaga!</h4>
+  Takie uprawnienia są już dodane.
+</div>
+{% endif %}
+
+{% if repository_modification %}
+    <div class="alert alert-success">
+    <a class="close" data-dismiss="alert">×</a>
+    <h4 class="alert-heading">{% if repository_modification.modification == "add" %}Uprawnienia dodane!{% else %} {% if repository_modification.modification == "del"%}Uprawnienia usunięte!{% endif %}{% endif%}</h4>
+    {% if repository_modification.modification == "add" %}Dodano{% else %} {% if repository_modification.modification == "del"%}Usunięto{% endif %}{% endif%} uprawnienie <strong>{{ repository_modification.permission }}</strong> do repozytorium <strong>{{ repository_modification.reponame }}</strong> dla użytkownika <strong>{{ repository_modification.username}}</strong>.
+    </div>
+{% endif %}
+
+{% if repos %}
+{% for repo in repos %}
+
+<h3>Repozytorium: {{repo.name}}</h3>
+
+<table class="git-table table" class="tablesorter">
+	<thead>
+		<tr>
+			<th>#</th>
+			<th>Uprawnienia</th>
+			<th>Użytkownik</th>
+			<th>Usunięcie</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for user in repo.perms.userRO %}
+	<tr><td>{{forloop.counter}}</td><td>Odczyt</td><td>{{user}}</td><td><a href="/account/repositories/del/{{repo.name}}/{{user}}/ro">Usuń</a></td></tr>
+	{% endfor %}
+
+	{% for user in repo.perms.userRW %}
+	<tr><td>{% with sum=repo.perms.userRO|length %}{{forloop.counter|add:sum}}{% endwith %}</td><td>Zapis</td><td>{{user}}</td><td><a href="/account/repositories/del/{{repo.name}}/{{user}}/rw">Usuń</a></td></tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% endfor %}
+{% else %}
+{% if error_no_git_dir %}
+    <div class="alert alert-error fade in">
+    <a class="close" data-dismiss="alert">×</a>
+    <h4 class="alert-heading">Uwaga!</h4>
+    Aby dodać uprawienia do repozytorium należy wcześniej w katalogu domowym utowrzyć katalog git a w nim repozyturium:
+    <pre>
+      cd ~
+      mkdir git
+      fixgitperm
+      cd git
+      git --bare init NAZWA_REPOZYTORIUM
+    </pre>
+    </div>
+    {% endif %}
+    Nie udostępniasz repozytoriów. Możesz kliknąć <a href="/account/repositories/add">tutaj</a>, aby dodać repozytorium.
+{% endif %}
+{% endblock %}
+
+{% block script %}
+<script>
+$(".alert").alert()
+$(document).ready(function() 
+{ 
+$(".git-table").tablesorter( {sortList: [[0,0]], headers: { 
+3: { 
+sorter: false 
+}}});}); 
+</script>
+
+{% endblock %}

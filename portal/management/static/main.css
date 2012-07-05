@@ -1,0 +1,58 @@
+body{
+	margin: 0;
+}
+
+#header{
+	height: 50px;
+	background-color: #507BAA;
+	color: white;
+	font-size: 24;
+	padding: 5px;
+}
+
+#content {
+    max-width: 1000px;
+    min-width: 780px;
+    width: auto;
+    margin-left: auto;
+    margin-right: auto;
+    height: 100%;
+    border-left: solid #507AAA;
+    border-right: solid #507AAA;
+	border-width: thin;
+	padding-top: 1;
+	padding-left: 20px;
+	padding-right: 20px;    
+}
+
+#footer{
+	height: 30px;
+	background-color: #507BAA;
+	color: white;
+	bottom: 0;
+	position: absolute;
+	width: 100%;
+}
+
+#login-box{
+	border: solid #507AAA;
+	border-width: thin;
+	width: 300px;
+	float: right;
+	background-color: #D1E0F1;
+	padding: 10px;
+	margin-right: 50px;
+/* 	position: relative; */
+}
+
+#registration-button{
+/* position: absolute; */
+	right: 20px;
+
+	
+	
+}
+
+#registration-link{
+	float: none;
+}

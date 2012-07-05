@@ -1,0 +1,124 @@
+{% extends "main.html" %}
+{% block left %}
+<h2>Rejestracja</h2>
+
+<form class="" action="/registration/" method="post">{% csrf_token %}
+{{ form.non_field_errors }}
+	<fieldset>	
+		<div class="control-group {% if form.username.errors %}error{% endif%}">
+			<label class="control-label">Nazwa użytkownika</label class="control-label">
+			<div class="controls {% if form.username.errors %}error{% endif%}">
+				{{ form.username }}
+				<span class="help-block">{{form.username.help_text}}</span>
+				{% if form.username.errors %}
+					<span class="help-inline">{% for error in form.username.errors %}{{ error }}{%endfor%}</span>
+				{% endif%}
+			</div>
+		</div>
+
+		<div class="control-group {% if form.name.errors %}error{% endif%}">
+			<label class="control-label">Imię</label class="control-label">
+			<div class="controls {% if form.name.errors %}error{% endif%}">
+				{{form.name}}
+				{% if form.name.errors %}
+					<span class="help-inline">{% for error in form.name.errors %}{{ error }}{%endfor%}</span>
+				{% endif%}
+			</div>
+		</div>
+
+		<div class="control-group {% if form.surname.errors %}error{% endif%}">
+			<label class="control-label">Nazwisko</label class="control-label">
+			<div class="controls {% if form.surname.errors %}error{% endif%}">
+				{{form.surname}}
+				{% if form.surname.errors %}
+					<span class="help-inline">{% for error in form.surname.errors %}{{ error }}{%endfor%}</span>
+				{% endif%}
+			</div>
+		</div>
+		
+		<div class="control-group {% if form.email.errors %}error{% endif%}">
+			<label class="control-label">Adres email</label class="control-label">
+			<div class="controls {% if form.email.errors %}error{% endif%}">
+				{{form.email}}
+				{% if form.email.errors %}
+					<span class="help-inline">{% for error in form.email.errors %}{{ error }}{%endfor%}</span>
+				{% endif%}
+			</div>
+		</div>
+		
+		<div class="control-group {% if form.password.errors %}error{% endif%}">
+			<label class="control-label">Hasło</label class="control-label">
+			<div class="controls {% if form.password.errors %}error{% endif%}">
+				{{form.password}}
+				{% if form.password.errors %}
+					<span class="help-inline">{% for error in form.password.errors %}{{ error }}{%endfor%}</span>
+				{% endif%}
+			</div>
+		</div>
+		
+		
+		<div class="control-group {% if form.repeat_password.errors %}error{% endif%}">
+			<label class="control-label">Powtórz hasło</label class="control-label">
+			<div class="controls {% if form.repeat_password.errors %}error{% endif%}">
+				{{form.repeat_password}}
+				{% if form.repeat_password.errors %}
+					<span class="help-inline">{% for error in form.repeat_password.errors %}{{ error }}{%endfor%}</span>
+				{% endif%}
+			</div>
+		</div>
+		
+		
+		<div class="control-group {% if form.ssh_public_key.errors %}error{% endif%}">
+			<label class="control-label">Klucz publiczny</label class="control-label">
+			<div class="controls {% if form.ssh_public_key.errors %}error{% endif%}">
+				{{form.ssh_public_key}}
+				{% if form.ssh_public_key.errors %}
+					<span class="help-inline">{% for error in form.ssh_public_key.errors %}{{ error }}{%endfor%}</span>
+				{% endif%}
+			</div>
+		</div>
+		
+		
+		
+		<div class="control-group {% if form.studies_year.errors %}error{% endif%}">
+			<label class="control-label">Rok studiów</label class="control-label">
+			<div class="controls {% if form.studies_year.errors %}error{% endif%}">
+				{{form.studies_year}}
+				{% if form.studies_year.errors %}
+					<span class="help-inline">{% for error in form.studies_year.errors %}{{ error }}{%endfor%}</span>
+				{% endif%}
+			</div>
+		</div>
+
+
+		<div class="control-group {% if form.rules.errors %}error{% endif%}">
+			<div class="controls {% if form.rules.errors %}error{% endif%}">
+				 <label class="control-label" style="display: inline !important;"> {{form.rules}} <!--<label class="control-label" style="display: inline; margin-left: 5px;">-->Oświadczam, że:</label class="control-label">
+<p>
+<ul>
+<li>jestem studentem PCz,</li>
+<li>konto będzie wykorzystywane do celów związanych ze studiowaniem,</li>
+<li>konto nie będzie wykorzystywane do celów nielegalnych, nieetycznych czy niemoralnych,</li>
+<li>wiem, że PCz nie odpowiada za bezpieczeństwo danych,</li>
+<li>wiem, że PCz nie odpowiada za działanie serwera,</li>
+<li>wiem, że konto może być w dowolnej chwili usunięte.</li>
+<li>Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z Ustawą z dnia 29 sierpnia 1997 r. o ochronie danych osobowych (Dz. U. z 2002 r. Nr 101, poz. 926 z późniejszymi zmianami).</li>
+</ul>
+</p>
+
+				{% if form.rules.errors %}
+					<span class="help-inline">{% for error in form.rules.errors %}{{ error }}{% endfor %}</span>
+				{% endif%}
+			</div>
+		</div>
+
+	
+
+		<div class="form-actions">
+			<div class="controls">
+				<input class="btn primary" id="registration-button" type="submit" value="Zarejestruj" />
+			</div>
+		</div>
+	</fieldset>
+</form>
+{% endblock %}

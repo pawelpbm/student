@@ -1,0 +1,65 @@
+{% extends "main.html" %}
+
+{% block left %}
+<h2>Ustawienia konta</h2>
+
+{% if changed %}
+    <div class="modal fade" id="activationModal">
+    <div class="modal-header">
+    <a class="close" data-dismiss="modal">×</a>
+    <h3>Dane zapisane</h3>
+    </div>
+    <div class="modal-body">
+    <p>
+     Dane zostały zmienione. W przypadku zmiany klucza publicznego konieczne jest usunięcie i ponowne dodanie uprawnień przez użytkowników, którzy udostępniali Ci repozytoria.
+    </p>
+    </div>
+    <div class="modal-footer">
+    <a href="#" class="btn" id="close-modal-btn">Zamknij</a>
+    </div>
+    </div>
+{% endif %}
+
+<p>Zmiany hasła dokonuje się poprzez polecenie <code>passwd</code>.
+
+<form class="" action="/account/" method="post">{% csrf_token %}
+{{ form.non_field_errors }}
+	<fieldset>	
+		<div class="control-group {% if form.email.errors %}error{% endif%}">
+			<label class="control-label">Adres email</label class="control-label">
+			<div class="controls {% if form.email.errors %}error{% endif%}">
+				{{form.email}}
+				{% if form.email.errors %}
+					<span class="help-inline">{% for error in form.email.errors %}{{ error }}{%endfor%}</span>
+				{% endif%}
+			</div>
+		</div>
+
+		<div class="control-group {% if form.ssh_public_key.errors %}error{% endif%}">
+			<label class="control-label">Klucz publiczny</label class="control-label">
+			<div class="controls {% if form.ssh_public_key.errors %}error{% endif%}">
+				{{form.ssh_public_key}}
+				{% if form.ssh_public_key.errors %}
+					<span class="help-inline">{% for error in form.ssh_public_key.errors %}{{ error }}{%endfor%}</span>
+				{% endif%}
+			</div>
+		</div>
+		
+
+		<div class="form-actions">
+			<div class="controls">
+				<input class="btn primary" id="registration-button" type="submit" value="Zapisz" />
+			</div>
+		</div>
+	</fieldset>
+</form>
+{% endblock %}
+
+{% block script %}
+<script>
+$('#activationModal').modal('show');
+$('#close-modal-btn').click(function()
+{$('#activationModal').modal('hide');
+});
+</script>
+{% endblock %}

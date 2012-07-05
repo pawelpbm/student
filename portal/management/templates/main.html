@@ -1,0 +1,87 @@
+<html>
+<head>
+<title>student.icis.pcz.pl</title>
+<link rel="stylesheet" href="{{STATIC_URL}}bootstrap/css/bootstrap.min.css">
+<style type="text/css">
+input[type=password], input[type=text]{width: 220px !important;
+height: auto !important;
+}
+label input{
+display: inline !important;
+}
+
+
+
+th.header { 
+    background-image: url({{STATIC_URL}}bg.gif);     
+    cursor: pointer; 
+    background-repeat: no-repeat; 
+    background-position: center left; 
+    padding-left: 20px; 
+    margin-left: -1px; 
+} 
+
+th.headerSortUp { 
+    background-image: url({{STATIC_URL}}asc.gif); 
+} 
+
+
+
+th.headerSortDown { 
+    background-image: url({{STATIC_URL}}desc.gif); 
+} 
+
+
+
+</style>
+</head>
+<body>
+<div class="container">
+	<div class="row">
+	  <div class="row">
+	    <div class="span8">
+	      <h1>student.icis.pcz.pl</h1>
+	    </div>
+	    <div class="span1 offset2">
+	      {% if user.is_authenticated %}
+	      {{ user }}
+	      <a href="/account/logout">Wyloguj</a>
+	      {% endif %}
+	    </div>
+	  </div>
+	  <div class="row">
+	    <div class="span8">
+	      {% block left %} &nbsp; {% endblock %} 
+	    </div>
+	    <div class="span4">
+	      {% if user.is_authenticated %}
+	      {% include "rightmenu.html" %}
+	      {% else  %}
+	      {% block rightmenu %}&nbsp;{% endblock %}
+	      {% endif %}
+
+	    </div>
+	  </div>
+	</div>
+</div>
+
+    <script src="{{STATIC_URL}}bootstrap/js/jquery-1.7.1.min.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-transition.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-alert.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/bootstrap-modal.js"></script>
+    <script src="{{STATIC_URL}}bootstrap/js/jquery.tablesorter.min.js"></script>
+
+    <script src="../assets/js/bootstrap-dropdown.js"></script>
+    <script src="../assets/js/bootstrap-scrollspy.js"></script>
+    <script src="../assets/js/bootstrap-tab.js"></script>
+    <script src="../assets/js/bootstrap-tooltip.js"></script>
+    <script src="../assets/js/bootstrap-popover.js"></script>
+    <script src="../assets/js/bootstrap-button.js"></script>
+
+    <script src="../assets/js/bootstrap-collapse.js"></script>
+    <script src="../assets/js/bootstrap-carousel.js"></script>
+    <script src="../assets/js/bootstrap-typeahead.js"></script>
+
+    {% block script %}&nbsp;{% endblock %}
+</body>
+</html>

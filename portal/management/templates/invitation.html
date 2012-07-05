@@ -1,0 +1,110 @@
+{% extends "main.html" %}
+
+{% block left %}
+<h2 style="margin-top: 20px;">Serwer studencki</h2>
+<p>Serwer udostępnia konta shell dla studentów, z możliwością hostowania i współdzielenia repozytoriów git.</p>
+<h3>Dostęp</h3>
+<p>
+<ul>
+<li>z dowolnego miejsca na Ziemii przy wykorzystaniu kluczy ssh</li>
+<li>z lab95 przy użyciu hasła</li>
+</ul>
+</p>
+<h3>Serwer</h3>
+<p>Serwer powstał w ramach działalności Częstochowskiej Grupy Użytkowników Linuxa (CzLUG) i Koła Naukowego "Informatyka".</p>
+
+
+<h3>Osoby odpowiedzialne</h3>
+<ul class="thumbnails">
+  <li class="span3">
+    <div class="thumbnail">
+      <img src="{{ STATIC_URL }}pbm.jpg" alt="">
+      <h5>Paweł Szubert - założyciel</h5>
+      <p><a href="http://pszubert.pl">http://pszubert.pl</a></p>
+
+    </div>
+  </li>
+  <li class="span3">
+    <div class="thumbnail">
+      <img src="{{ STATIC_URL }}irek.jpg" alt="Ireneusz Szczesniak">
+      <h5>Ireneusz Szczesniak - opiekun</h5>
+      <p><a href="http://www.icis.pcz.pl/~iszczesniak/">http://www.icis.pcz.pl/~iszczesniak/</a></p>
+    </div>
+  </li>
+</ul>
+
+
+
+{% if confirmed %}
+    <div class="modal fade" id="activationModal">
+    <div class="modal-header">
+    <a class="close" data-dismiss="modal">×</a>
+    <h3>Potwierdzenie konta</h3>
+    </div>
+    <div class="modal-body">
+    <p>
+      {% if confirmed == 1 %}To konto zostało już potwierdzone. Prosimy poczekać na jego aktywację przez administratora. {% endif %}
+      {% if confirmed == 2 %}Dziękujemy za potwierdzenie konta. Prosimy poczekać na jego aktywację przez administratora. {% endif %}
+      {% if confirmed == 3 %}Odnośnik potwierdzający nieprawidłowy. Być może konto zostało już aktywowane. {% endif %}
+      {% if confirmed == 4 %}Dziękujemy za rejestrację. Na podany adres mailowy został przesłany odnośnik potwierdzający. {% endif %}
+
+    </p>
+    </div>
+    <div class="modal-footer">
+    <a href="#" class="btn" id="close-modal-btn">Zamknij</a>
+    </div>
+    </div>
+{% endif %}
+
+{% endblock %}
+
+{% if not user.is_authenticated %}
+{% block rightmenu %}
+<div id="login-box">
+<form class="form-stacked" action="/" method="post">{% csrf_token %}
+{{ form.non_field_errors }}
+	<fieldset>
+		<legend>Logowanie</legend>
+		
+		<div class="control-group {% if error %}error{% endif%}">
+			<label class="control-label">Login</label>
+			<div class="controls {% if form.username.errors %}error{% endif%}">
+				{% if form.username.errors %}
+					<span class="help-inline">{% for error in form.username.errors %}{{ error }}{%endfor%}</span>
+				{% endif%}
+				{{ form.username }}
+			</div>
+		</div>
+
+		<div class="control-group {% if error %}error{% endif%}">
+			<label class="control-label">Hasło</label>
+			<div class="controls {% if form.username.errors %}error{% endif%}">
+				{% if form.password.errors %}
+					<span class="help-inline">{% for error in form.password.errors %}{{ error }}{%endfor%}</span>
+				{% endif%}
+				{{form.password}}
+			</div>
+		</div>
+		{% if error %} <div class="controls error"><span class="help-inline"> {{error}} </span> </div>{% endif %}
+		<div class="control-group">
+			<div class="input">
+				<input class="btn btn-primary" type="submit" value="Zaloguj" />
+				<a class="btn" href="/registration/">Załóż konto</a>														
+			</div>
+		</div>
+	</fieldset>
+</form>
+</div>
+
+{% endblock %}
+{% endif %}
+
+{% block script %}
+<script>
+$('#activationModal').modal('show');
+$('#close-modal-btn').click(function() 
+{$('#activationModal').modal('hide');
+});
+</script>
+{% endblock %}
+
