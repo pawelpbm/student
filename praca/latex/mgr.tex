@@ -1,0 +1,1216 @@
+\documentclass[a4paper,12pt,twoside,openright]{mgr}
+
+\usepackage[pdf]{pstricks}
+\usepackage{pst-tree}
+\usepackage{pst-bar}
+
+\usepackage{biblatex}
+\usepackage{url}
+\usepackage{rotating}
+\usepackage{changepage}
+\usepackage{chngcntr}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{todonotes}
+\usepackage{longtable}
+\reversemarginpar
+
+\usepackage{lipsum}
+\usepackage{graphicx}
+
+%\usepackage{times}
+\usepackage{textcomp}
+
+
+\usepackage{hyperref}
+\usepackage[polish]{babel}
+
+\bibliography{mgr}
+
+
+\lstset{numberbychapter=false,showstringspaces=false,breaklines=true,breakatwhitespace=false,numbers=left,numberstyle=\footnotesize}
+
+%\newcounter{tabcnt}
+%\renewcommand{\thetable}{\arabic{tabcnt}}
+
+%**************************************************************************
+% Dane do strony tytu³owej
+%
+
+% Autor
+\autor{Pawe³ Szubert}
+
+% Tytu³ pracy magisterskiej
+\tytul{Implementacja us³ug z~wykorzystaniem OpenLDAP}
+
+% tytu pracy magisterskiej w~jêzyku angielskim
+\tytulAng{Implementation of services using OpenLDAP}
+
+% Promotor
+\promotor{dr in¿. Ireneusz Szcze¶niak}
+
+% Rok
+\rok{2012}
+
+% Kierunek
+\kierunek{Informatyka}
+
+% Specjalno¶æ
+\specjalnosc{Sieciowe technologie informatyczne}
+
+% Numer albumu
+\numerAlbumu{99137}
+
+%
+%**************************************************************************
+
+\DeclareFieldFormat{postnote}{str. #1}
+\DeclareFieldFormat{urldate}{\mkbibparens{data dostêpu \space#1}}
+
+
+\defbibheading{bibliography}[\refname]{%
+    \chapter*{Literatura}%
+    \markboth{\MakeUppercase{#1}}{\MakeUppercase{#1}}}
+
+% Styl dla wtr±ceñ anglojêzycznych
+\newcommand{\eng}[1]{(\emph{#1})}
+
+\newcommand{\attr}[1]{\texttt{#1}}
+\newcommand{\val}[1]{\texttt{#1}}
+
+\newcommand{\tylda}{{\raise.17ex\hbox{$\scriptstyle\mathtt{\sim}$}}}
+
+\newenvironment{myitemize}{
+\begin{itemize}
+\setlength{\itemsep}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\parsep}{0pt}}
+{\end{itemize}}
+
+\newenvironment{mydescription}{
+\begin{description}
+\setlength{\itemsep}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\parsep}{0pt}}
+{\end{description}}
+
+\counterwithout{figure}{chapter}
+\counterwithout{table}{chapter}
+
+%
+\makeatletter
+\def\cleardoublepage{\clearpage\if@twoside \ifodd\c@page\else
+\hbox{}
+\vspace*{\fill}
+\vspace{\fill}
+\thispagestyle{plain}
+\newpage
+\if@twocolumn\hbox{}\newpage\fi\fi\fi}
+\makeatother
+
+
+
+
+\begin{document}
+
+\stronaTytulowa
+
+\tableofcontents
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+In every company which is using computers and providing employee some intranet services, there is a problem with storing employees' data.
+
+Usually, each application or service has its own database, so users' data are decentralized and located in separated databases, which can cause a lot of problems.
+
+From administrator's perspective it is necessary to monitor many database services. When new employee is hired, it is necessary to create accounts for him in all services and assign permissions. When he is leaving company, administrator has to remove accounts one by one.
+
+Solution for all those problems is to create central database of users, that can be used by all services. Tool that is the most suitable to that needs is LDAP server. Due to its flexibility and big scalability, there is a lot of projects that are using LDAP as authorization backend. Because of simple API, it is extremely easy to add LDAP support in our software. 
+
+\chapter*{Wstêp}
+\addcontentsline{toc}{chapter}{Wstêp}
+\thispagestyle{plain}
+W~ka¿dej firmie czy organizacji, której dzia³alno¶æ wi±¿e siê z~wykorzystaniem komputerów, a~pracownikowi udostêpniane s± jakie¶ zasoby intranetowe po pewnym czasie powstaje problem zwi±zany z~zarz±dzaniem uprawnieniami do takich zasobów. Zasobami takimi s± zarówno konta na lokalnych komputerach, serwisy dzia³aj±ce w ramach lokalnego intranetu czy us³ugi przeznaczone dla programistów takie jak system kontroli wersji czy system zarz±dzania projektem. Ka¿dy z~tych zasobów zazwyczaj korzysta z~w³asnej bazy u¿ytkowników. Taka decentralizacja danych o~u¿ytkownikach jest k³opotliwa zarówno dla administratorów jak i~dla samych u¿ytkowników. 
+
+Patrz±c z~punktu widzenia u¿ytkownika podstawow± wad± jest konieczno¶æ pamiêtania wielu hase³ do ró¿nych us³ug, a~w przypadku potrzeby ich zmiany potrzeba skorzystania z~wielu ró¿nych narzêdzi czy te¿ stron intranetowych.
+
+Dla administratora taka decentralizacja oznacza konieczno¶æ nadzorowania wielu rozproszonych baz danych o~u¿ytkownikach. W~przypadku zatrudnienia nowego u¿ytkownika konieczne jest za³o¿enie mu i~skonfigurowanie konta w wielu ró¿nych us³ugach, w przypadku odej¶cia takiego pracownika - zablokowanie lub usuniêcie konta. Kiedy serwisów czy us³ug jest ma³o nie stanowi to jeszcze problemu, ale kiedy jest ich kilka czy kilkana¶cie i~ró¿ne us³ugi wykorzystywane s± przez ró¿ne dzia³y firmy nie trudno o~przeoczenie jednego serwisu. Przeoczenie takiej blokady mo¿e okazaæ siê tragiczne w skutkach - znane s± przypadki, kiedy zwolniony pracownik w ramach zemsty wykrada³ poufne dane firmowe, co by³o mo¿liwe dlatego, ¿e wci±¿ mia³ dostêp do firmowej poczty czy witryny intranetowej.
+
+Rozwi±zaniem, które pozwala na uproszczenie administracji takimi danymi jest stworzenie centralnego katalogu u¿ytkowników. Narzêdziem, które najlepiej nadaje siê do tego celu jest serwer LDAP. Ze wzglêdu na swoje cechy takie jak du¿a skalowalno¶æ i~mo¿liwo¶æ dopasowania do w³asnych potrzeb, wiele oprogramowania posiada ju¿ wsparcie dla pobieranie danych autoryzacyjnych z~katalogu LDAP. Dziêki prostemu API i~du¿ej ilo¶ci bibliotek dla wielu jêzyków, mo¿liwa jest tak¿e szybka implementacja autoryzacji z~wykorzystaniem katalogu LDAP we w³asnym oprogramowaniu.
+
+\section*{Cel pracy}
+\addcontentsline{toc}{section}{Cel pracy}
+\thispagestyle{plain}
+Celem niniejszej pracy jest opracowanie konfiguracji serwera LDAP, tak aby móg³ on s³u¿yæ jako ¼ród³o danych autoryzacyjnych dla us³ug takich jak konta na serwerze, mo¿liwo¶æ zarz±dzania w³asnym repozytorium GIT i~udostêpniania go innym studentom. Do przechowywania informacji o~uprawnieniach do repozytoriów wykorzystany zostanie tak¿e katalog LDAP.
+
+Aby u¿ytkownicy mogli rejestrowaæ siê i~zarz±dzaæ repozytoriami konieczne jest te¿ stworzenie serwisu internetowego dokonuj±cego modyfikacji wewn±trz katalogu.
+
+\section*{Struktura pracy}
+\addcontentsline{toc}{section}{Struktura pracy}
+Praca sk³ada siê z~trzech rozdzia³ów. Pierwszy zawiera podstawowe informacje na temat tego co to jest LDAP, w jaki sposób odbywa siê komunikacja pomiêdzy klientem a serwerem i~w jaki sposób przechowywane s± dane wewn±trz katalogu. W~rozdziale tym opisany jest tak¿e sposób konfiguracji serwera LDAP.
+
+W~rozdziale drugim zawarte s± informacje na temat instalacji i~konfiguracji serwera OpenLDAP. Znajduj± siê w nim tak¿e informacje na temat konfiguracji poszczególnych us³ug jakie zosta³y zaimplementowane. Omówione zosta³y zmiany, jakie nale¿y wprowadziæ zarówno w samym katalogu, jak i~w systemie w celu udostêpnienia mo¿liwo¶ci lokalnego i~zdalnego logowania u¿ytkowników, korzystania z~repozytoriów GIT oraz ich udostêpniania.
+
+Rozdzia³ trzeci zawiera informacje na temat portalu s³u¿±cego do rejestracji u¿ytkowników oraz zarz±dzania repozytoriami. W~pierwszej sekcji zaprezentowane zosta³y biblioteki jakie zosta³y wykorzystane do stworzenia portalu. Nastêpnie przedstawiona zosta³a Pythonowa reprezentacja danych przechowywanych w katalogu. Kolejne dwie sekcje prezentuj± sposób implementacji sekcji portalu dotycz±cej zarz±dzania u¿ytkownikami i~repozytoriami.
+
+
+\chapter{LDAP i~OpenLDAP}
+\label{sec:ldap}
+Aby w pe³ni zrozumieæ czym jest LDAP \eng{Lightweight Directory Access Protocol} nale¿y na pocz±tek zdefiniowaæ pojêcie us³ugi katalogowej. W~najprostszym ujêciu us³uga katalogowa jest to wyspecjalizowana baza danych \cite[18]{udlds}. Istniej± jednak pewne ró¿nice pomiêdzy katalogiem a baz± danych:
+\begin{myitemize}
+\item nastawienie na odczyt i~przeszukiwanie a nie zapisywanie danych,
+\item zazwyczaj brak wsparcia dla transakcji i~zaawansowanych operacji,
+\item du¿a mo¿liwo¶æ rozszerzania i~skalowania.
+\end{myitemize}
+
+LDAP jest protoko³em dostêpowym do us³ug katalogowych, jednak w szerszym znaczeniu jest to tak¿e:
+\begin{myitemize}
+\item model opisuj±cy rodzaj danych jakie mo¿na umie¶ciæ w katalogu, sposób w jaki bêd± one u³o¿one oraz model uprawnieñ zabezpieczaj±cy dane przed nieautoryzowanym dostêpem,
+\item format LDIF \eng{LDAP Data Interchange Format} - format wymiany danych katalogowych w postaci tekstowej,
+\item oprogramowanie serwera LDAP,
+\item narzêdzia pozwalaj±ce uzyskaæ dostêp do danych zawartych w katalogu oraz narzêdzia pozwalaj±ce na jego przeszukiwanie, \cite[63]{udlds}
+\item API pozwalaj±ce na dostêp do funkcji katalogu.
+\end{myitemize}
+ 
+\section{Protokó³ LDAP}
+\label{sec:protokol-ldap}
+\subsection{Wiadomo¶ci}
+Protokó³ LDAP jest oparty o~komunikaty (wiadomo¶ci). Klient LDAP po sformu³owaniu zapytania przesy³a je do serwera, który przetwarza dan± wiadomo¶æ, a~nastêpnie odpowiada klientowi przesy³aj±c odpowied¼ w postaci jednej lub serii wiadomo¶ci (rys. \ref{rys:komunikaty}).
+
+Kiedy klient LDAP chce dokonaæ wyszukiwania danych w katalogu wysy³a do serwera wiadomo¶æ opatrzon± wygenerowanym przez siebie identyfikatorem. Serwer po wyszukaniu danych wysy³a odpowied¼ oraz, w kolejnej wiadomo¶ci, kod b³êdu. Wszystkie wiadomo¶ci wysy³ane przez serwer zostaj± opatrzone tym samym identyfikatorem, który znajdowa³ siê w zapytaniu klienta. W~przypadku, kiedy serwer odnajdzie wiele wyników, ka¿dy z~nich przesy³any jest w odrêbnej wiadomo¶ci.
+
+%\psset{unit=1pt}
+
+%\psset{nodesep=30pt}
+
+\begin{figure}[h]
+\begin{center}
+\begin{pspicture}[unit=1pt,nodesep=30pt](10,-10)(10,10)
+\rnode{K}{\psframebox{\parbox[c][100pt]{100pt}{\centering Klient}}} \hspace{240pt} \rnode{S}{\psframebox{\parbox[c][100pt]{100pt}{\centering Serwer}}}
+
+\ncline[arrowscale=2,offset=50pt]{->}{K}{S} \aput{:U}{1. Wyszukiwanie}
+\ncline[arrowscale=2,offset=25pt]{<-}{K}{S} \aput{:U}{2. Zwrócenie pierwszego wyniku}
+\ncline[arrowscale=2,offset=0pt]{<-}{K}{S} \aput{:U}{3. Zwrócenie drugiego wyniku}
+\ncline[arrowscale=2,offset=-25pt]{<-}{K}{S} \aput{:U}{4. Zwrócenie n-tego wyniku}
+\ncline[arrowscale=2,offset=-50pt]{<-}{K}{S} \aput{:U}{5. Kod b³êdu}
+\end{pspicture}
+\caption{Przesy³anie komunikatów pomiêdzy serwerem a klientem}
+\label{rys:komunikaty}
+\end{center}
+\end{figure}
+
+\subsection{Operacje}
+\label{sec:operacje}
+Ka¿da wiadomo¶æ, jaka jest przesy³ana do serwera musi zawieraæ informacjê o~tym jak± operacjê serwer ma wykonaæ. LDAP definiuje kilka rodzajów operacji. Podstawowe z~nich to:
+
+\begin{myitemize}
+\item operacja wyszukiwania: search,
+\item operacje modyfikuj±ce dane: add, delete, modify, modify DN,
+\item operacje uwierzytelnienia: bind, unbind.
+\end{myitemize}
+
+%\subsubsection{Operacja search}
+
+\section{Struktura danych w LDAP}
+\label{sec:struktura-danych}
+Dane w katalogu LDAP przechowywane s± w postaci wpisów \eng{entry}. Wpisy umieszczone s± w okre¶lonej hierarchii w formie drzewa (rys. \ref{rys:przykladowe-drzewo-ldap}). Mimo tego, ¿e katalog LDAP ma strukturê hierarchiczn± ¿adna konkretna hierarchia nie jest wymuszona. Administrator mo¿e sam okre¶liæ gdzie w drzewie znajdowa³y bêd± siê konkretne wpisy, tak aby zarz±dzanie i~wykorzystanie takiego drzewa by³o jak naj³atwiejsze i~dopasowane do indywidualnych potrzeb. 
+
+\begin{figure}[h]
+\begin{center}
+\begin{pspicture}(0,-5)(0,1)
+\pstree{\TC~[tnpos=r]{dc=example,dc=com}}{ 
+  \pstree{\TC~[tnpos=r]{ou=Users}}{
+    \pstree{\TC~[tnpos=r]{uid=jkowalski}}{}
+    \pstree{\TC~[tnpos=r]{uid=mjackowski}}{}
+  }
+  \pstree{\TC~[tnpos=r]{ou=Groups}}{
+    \pstree{\TC~[tnpos=r]{cn=U¿ytkownicy}}{}
+    \pstree{\TC~[tnpos=r]{uid=Administratorzy}}{}
+  }
+}
+\end{pspicture}
+\caption{Przyk³adowe drzewo LDAP}
+\label{rys:przykladowe-drzewo-ldap}
+\end{center}
+\end{figure}
+
+Ka¿dy ze wpisów posiada jakie¶ atrybuty \eng{attributes} oraz warto¶ci tych atrybutów \eng{values} (tabela \ref{tab:przykladowe-atrybuty}).
+
+\begin{table}
+\centering
+\caption{Przyk³adowe atrybuty i~ich warto¶ci}
+\label{tab:przykladowe-atrybuty}
+\begin{tabular}{|c|c|}
+\hline
+Atrybut & Warto¶æ \\ \hline
+\attr{cn:} & Jan Kowalski \\ \hline
+\attr{sn:} & Kowalski \\ \hline
+\attr{uid:} & jkowalski \\ \hline
+\attr{mail:} & jkowalski@example.com \\ \hline
+\end{tabular}
+\end{table}
+
+To jakie atrybuty mo¿e posiadaæ dany wpis zale¿ne jest od tego jakiej jest on klasy \eng{objectClass}. Wpis mo¿e posiadaæ jedn± klasê podstawow± \eng{structural}\footnote{Wpisów na temat klasy podstawowej mo¿e byæ kilka o~ile klasy te tworz± hierarchiê dziedziczenia.} oraz kilka klas dodatkowych \eng{auxiliary}. Ka¿da klasa definiuje listê atrybutów jak± obiekt musi posiadaæ (atrybuty z~opcj± \texttt{MUST}) oraz atrybuty opcjonalne (z~opcj± \texttt{MAY}). W~klasie okre¶lone jest tak¿e czy dany atrybut mo¿e wystêpowaæ jedynie raz czy kilka razy. Kolejn± rzecz± jaka definiowana jest w klasie jest typ atrybutu (tekstowy, numeryczny czy binarny) oraz to w jaki sposób ma przebiegaæ porównywanie atrybutów. 
+
+Ka¿dy wpis musi zawieraæ atrybut \attr{entryDN} \eng{Distinguished Name} bêd±cy adresem danego wpisu w drzewie LDAP. Odczytuj±c warto¶æ \attr{entryDN} jeste¶my w stanie jednoznacznie zidentyfikowaæ dany wpis w drzewie LDAP. Atrybut ten tworzony jest na podstawie hierarchii wpisu w drzewie oraz jednego z~obowi±zkowych atrybutów wpisu. Adres DN wpisu u¿ytkownika Jan Kowalski przedstawionego na rysunku \ref{rys:przykladowe-drzewo-ldap} to \val{uid=jkowalski,\linebreak{}ou=Users,dc=example,dc=com}.
+
+Pozosta³e atrybuty mog± okre¶laæ ró¿ne w³a¶ciwo¶ci danego obiektu.
+
+\section{OpenLDAP}
+Jedn± z~najpopularniejszych implementacji LDAP jest serwer OpenLDAP. Projekt ten powsta³ w roku 1998 na podstawie kodu ¼ród³owego serwera LDAP z~Uniwersytetu w Michigan. Od roku 2000 serwer OpenLDAP obs³uguje protokó³ LDAP w wersji 3.
+
+\subsection{Konfiguracja serwera OpenLDAP}
+Konfiguracja serwera OpenLDAP mo¿e odbywaæ siê na dwa sposoby: albo za pomoc± pliku konfiguracyjnego \texttt{slapd.conf}, albo za pomoc± katalogu \texttt{slapd.d}. Mo¿liwo¶æ konfiguracji poprzez katalog \texttt{slapd.d} zosta³a dodana w wersji 2.3 programu. Konfiguracja za pomoc± pliku konfiguracyjnego jest uznawana za przestarza³± i~wypierana przez konfiguracjê poprzez katalog konfiguracyjny. Podstawow± zalet± wykorzystania katalogu jest mo¿liwo¶æ wprowadzania zamian w konfiguracji serwera bez jego restartowania, co nie by³o mo¿liwe przy wykorzystaniu pliku.
+
+Zawarto¶æ katalogu konfiguracyjnego jest mapowana na specjalny katalog LDAP\linebreak{} \texttt{cn=config}\ref{rys:cn-config}, tak wiêc mo¿liwe jest konfigurowanie serwera za po¶rednictwem dowolnego edytora danych LDAP, dziêki czemu administrator katalogu nie musi mieæ dostêpu do systemu plików serwera. Wewn±trz katalogu \texttt{slapd.d} znajduje siê wiele plików w formacie LDIF, które konfiguruj± poszczególne sk³adniki serwera, takie jak wykorzystane schematy, modu³y czy bazy danych.
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics{cn-config}
+\caption{Katalog konfiguracyjny \texttt{cn=config}}
+\label{rys:cn-config}
+\end{center}
+\end{figure}
+
+G³ówna ga³±¼ \texttt{cn=config} zawiera opcje takie jak ¶cie¿ki do plików pid i~args czy poziom logowania.
+
+Ga³±¼ \texttt{cn=module,cn=config} odpowiada za ³adowanie modu³ów serwera. Atrybut \attr{olcModulePath} okre¶la ¶cie¿kê w której przechowywane s± modu³y, a~kolejne wpisy\linebreak{} \attr{olcModuleLoad} wskazuj± nazwê i~kolejno¶æ w jakiej nast±pi za³adowanie danego modu³u. W~przypadku modu³ów, które s± od siebie zale¿ne powinna zostaæ zachowana odpowiednia kolejno¶æ ³adowania.
+
+We wpisach znajduj±cych siê poni¿ej ga³êzi \texttt{cn=schema,cn=config} przechowywane s± definicje schematów danych jakie mog± byæ przechowywane w katalogu. Ka¿dy z~takich schematów przechowywany jest w osobnym pliku LDIF. Nazwy plików (czyli tak¿e nazwy \attr{cn}) wskazuj± kolejno¶æ ³adowania schematów. Zachowanie odpowiedniej kolejno¶ci jest wa¿ne ze wzglêdu na mo¿liwo¶æ dziedziczenia atrybutów i~klas.
+
+Ga³±¼ \texttt{olcBackend=hdb,cn=config} zawiera konfiguracjê backendu (silnika bazy danych w jakiej serwer przechowywa³ bêdzie wpisy).
+
+Kolejnymi pozycjami s± trzy wpisy \attr{olcDatabase}, które konfiguruj± poszczególne bazy danych (katalogi). \attr{olcDatabase=\{-1\}frontend,cn=config}, która jest ³adowana jako pierwsza zawiera globaln± konfiguracjê wszystkich katalogów, jednak opcje zawarte w tym pliku mog± byæ nadpisywane przez poszczególne katalogi osobno. Kolejnym zdefiniowanym katalogiem jest \texttt{olcDatabase=\{0\}config,cn=config}, czyli w³a¶nie katalog konfiguracyjny. Katalogiem, który jest definiowany jako ostatni jest \texttt{olcDatabase=\{1\}hdb,cn=config}, czyli ten, który bêdzie przechowywa³ faktyczne dane.
+
+W~ka¿dym wpisie definiuj±cym katalog mo¿liwe jest zawarcie wielu parametrów. Najwa¿niejsze z~nich to:
+\begin{myitemize}
+\item \attr{olcRootDN} - DN administratora,
+\item \attr{oldRootPW} - has³o administratora,
+\item \attr{olcDbDirectory} - katalog w którym przechowywane bêd± pliki danej bazy,
+\item \attr{olcAccess} - listy ACL, definiuj±ce dostêp u¿ytkowników do poszczególnych wpisów lub atrybutów. Wpisów tego typu mo¿e byæ wiele.
+\item \attr{olcDbIndex} - informacje na temat tego jakie atrybuty maj± byæ indeksowane. Indeksowanie atrybutów przyspiesza ich przeszukiwanie.
+\item \attr{olcDbConfig} - ró¿ne opcje konfiguracyjne bazy danych.
+\end{myitemize}
+
+Podstawowa konfiguracja serwera tworzona jest podczas jego instalacji, jednak w celu uzyskania lepszej wydajno¶ci czy podniesienia bezpieczeñstwa danych przechowywanych w katalogu konieczne jest dodanie indeksów czy list ACL. 
+ 
+\chapter{Implementacja}
+\section{Instalacja i~konfiguracja oprogramowania}
+Spo¶ród kilku dostêpnych implementacji LDAP wybrany zosta³ serwer OpenLDAP. Jako platforma systemowa wybrana zosta³a dystrybucja Debian, dostarczaj±ca w repozytorium pakiety OpenLDAP.
+
+Instalacja serwera OpenLDAP dokonana zosta³a za pomoc± narzêdzia \texttt{apt}: 
+\begin{verbatim}
+apt-get install slapd
+\end{verbatim}
+
+Po instalacji nale¿y wywo³aæ kreator konfiguracji pakietu:
+\begin{verbatim}
+dpkg-reconfigure -plow slapd
+\end{verbatim}
+
+W~kreatorze tym wprowadzone zosta³y nastêpuj±ce dane:
+\begin{myitemize}
+\item Omit OpenLDAP server configuration? No
+\item DNS domain name: \texttt{icis.pcz.pl}
+\item Organization name: \texttt{icis.pcz.pl}
+\item Administrator password: has³o administratora
+\item Database backend to use: HDB
+\item Do you want the database to be removed when slapd is purged? No
+\item Move old database? No
+\item Allow LDAPv2 protocol? No
+\end{myitemize}
+
+Kreator ten utworzy podstawow± strukturê katalogu oraz okre¶li najwa¿niejsze opcje takie jak has³o administratora oraz silnik bazy danych jaki bêdzie wykorzystywany przez serwer LDAP do przechowywania danych.
+
+Po instalacji konieczne jest te¿ ustawienie has³a administratora dla bazy konfiguracyjnej \val{cn=config}, poprzez dodanie atrybutu \attr{olcRootPW} do pliku \texttt{/etc/ldap/slapd.d/\linebreak{}cn=config/olcDatabase={0}config.ldif}. Warto¶æ tego atrybutu to has³o zaszyfrowane algorytmem SHA z~sol± (SSHA)  i~zakodowane przy u¿yciu base64.
+
+OpenLDAP dostarcza narzêdzie \texttt{slappasswd} do szyfrowania hase³. Po jego uruchomieniu z~parametrem \texttt{-h {SSHA}} nale¿y podaæ has³o, które ma zostaæ zaszyfrowane wskazanym algorytmem.
+
+\begin{verbatim}
+root@debian:/# slappasswd -h {SSHA} 
+New password: [wprowadzenie has³a]
+Re-enter new password: [powtórzenie has³a]
+{SSHA}bcBEMy/5NH0jlUX4bVjPhrZzN8C9ZQIk
+\end{verbatim}
+
+Has³o takie nastêpnie zosta³o zakodowane narzêdziem \texttt{base64}:
+\begin{verbatim}
+root@debian:/# base64 
+{SSHA}bcBEMy/5NH0jlUX4bVjPhrZzN8C9ZQIk
+^D
+e1NTSEF9YmNCRU15LzVOSDBqbFVYNGJWalBoclp6TjhDOVpRSWsK
+\end{verbatim}
+
+W~przypadku dodawania do plików LDIF danych kodowanych w base64 po nazwie parametru stosowane s± dwa dwukropki.
+
+Po okre¶leniu has³a administratora bazy konfiguracyjnej mo¿liwe jest pod³±czenie siê do niej za pomoc± dowolnego narzêdzia do zarz±dzania katalogiem LDAP. Dane jakie nale¿y podaæ przy ³±czeniu siê s± nastêpuj±ce:
+\begin{myitemize}
+\item user: \texttt{cn=admin,cn=config},
+\item password: ustawione has³o,
+\item basedn: \texttt{cn=config}.
+\end{myitemize}
+
+\section{Podstawowa struktura katalogu}
+\label{sec:podstawowa-struktura-katalogu}
+Podstawowym obiektem jaki bêdziemy przechowywali w katalogu s± u¿ytkownicy, dlatego w korzeniu drzewa \val{dc=icis,dc=pcz,dc=pl} wydzielona zosta³a jednostka organizacyjna \eng{organizational unit} \val{ou=users} (rys. \ref{rys:podstawowa-struktura}).
+
+Jednostka organizacyjna \val{ou=users} s³u¿y wy³±cznie do grupowania innych wpisów i~zawiera jeden wymagany atrybut \attr{ou}, który wykorzystany jest do budowy \attr{DN} (tabela \ref{tab:ou-users}).
+
+\begin{figure}[h]
+\begin{center}
+\begin{pspicture}(0,-5)(0,1)
+\pstree{\TC~[tnpos=r]{dc=icis,dc=pcz,dc=pl}}{ 
+  \pstree{\TC~[tnpos=r]{ou=users}}{
+    \pstree{\TC~[tnpos=r]{uid=u¿ytkownik1}}{}
+    \pstree{\TC~[tnpos=r]{uid=u¿ytkownik2}}{}
+  }
+  \pstree{\TC~[tnpos=r]{cn=admin}}{}
+
+}
+\end{pspicture}
+\caption{Podstawowa struktura stworzonego katalogu}
+\label{rys:podstawowa-struktura}
+\end{center}
+\end{figure}
+
+\begin{table}
+\centering
+\caption{Wpis \val{ou=users}}
+\label{tab:ou-users}
+\begin{tabular}{|c|c|}
+\hline
+Atrybut & Warto¶æ \\ \hline
+\attr{objectClass:} & top \\ \hline
+\attr{objectClass:} & organizationalUnit \\ \hline
+\attr{ou:} & users \\ \hline
+\end{tabular}
+\end{table}
+
+Wewn±trz jednostki \val{ou=users} dla ka¿dego u¿ytkownika zosta³ stworzony wpis klasy \val{inetOrgPerson} \cite{rfc2798}, dziedzicz±cej po \val{organizationalPerson} \cite{rfc4519}, która natomiast dziedziczy po klasie \val{person} \cite{rfc4519}.
+
+Klasy te dostarczaj± pola opisane w tabeli \ref{tab:inetorgperson}. Do przechowywania danych wykorzystane zosta³y pola reprezentuj±ce imiê i~nazwisko, nazwisko, nazwê u¿ytkownika oraz adres email.
+
+{\footnotesize
+\begin{longtable}{|c|c|c|p{5cm}|}
+\caption{Atrybuty dostêpne w klasie \texttt{inetOrgPerson} oraz klasach z~których ona dziedziczy.}
+\label{tab:inetorgperson}
+\\ \hline
+Atrybut & Klasa & MUST/MAY & Opis \\ \hline
+\attr{sn} & person & MUST & Surname - nazwisko \\ \hline
+\attr{cn} & person & MUST & Common name - imiê i~nazwisko \\ \hline
+\attr{userPassword} & person & MAY & Has³o \\ \hline
+\attr{telephoneNumber} & person & MAY & Numer telefonu \\ \hline
+\attr{seeAlso} & person & MAY & \attr{DN} obiektu powi±zanego \\ \hline
+\attr{description} & person & MAY & Opis \\ \hline
+\attr{title} & organizationalPerson & MAY &  Tytu³ osoby \\ \hline
+\attr{x121Address} & organizationalPerson & MAY &  Adres w formacie X.121 \\ \hline
+\attr{registeredAddress} & organizationalPerson & MAY & Adres pocztowy \\ \hline
+\attr{destinationIndicator} & organizationalPerson & MAY &  Kraj i~miejscowo¶æ \\ \hline
+\attr{preferredDeliveryMethod} & organizationalPerson & MAY &  Preferowany sposób dostarczania wiadomo¶ci\\ \hline
+\attr{telexNumber} & organizationalPerson & MAY & Numer teleksu \\ \hline
+\attr{teletexTerminalIdentifier} & organizationalPerson & MAY & Wycofany \\ \hline
+\attr{telephoneNumber} & organizationalPerson & MAY & Numer telefonu \\ \hline
+\attr{internationalISDNNumber} & organizationalPerson & MAY &  Numer ISDN \\ \hline
+\attr{facsimileTelephoneNumber} & organizationalPerson & MAY &  Numer faxu \\ \hline
+\attr{street} & organizationalPerson & MAY & Ulica \\ \hline
+\attr{postOfficeBox} & organizationalPerson & MAY & Numer skrytki pocztowej \\ \hline
+\attr{postalCode} & organizationalPerson & MAY & Kod pocztowy \\ \hline
+\attr{postalAddress} & organizationalPerson & MAY & Adres korespondencyjny \\ \hline
+\attr{physicalDeliveryOfficeName} & organizationalPerson & MAY & Odzia³ pocztowy \\ \hline
+\attr{ou} & organizationalPerson & MAY & organizationalUnitName - nazwa jednostki organizacyjnej \\ \hline
+\attr{st} & organizationalPerson & MAY & stateOrProvinceName - stan lub prowincja \\ \hline
+\attr{l} & organizationalPerson & MAY & localityName - miasto lub inny region administracyjny \\ \hline
+\attr{audio} & inetOrgPerson & MAY & Nagranie d¼wiêkowe \\ \hline
+\attr{businessCategory} & inetOrgPerson & MAY & Kategoria biznesowa \\ \hline
+\attr{carLicense} & inetOrgPerson & MAY & Numer prawa jazdy lub tablic rejestracyjnych \\ \hline
+\attr{departmentNumber} & inetOrgPerson & MAY & Numer oddzia³u \\ \hline
+\attr{displayName} & inetOrgPerson & MAY & Wy¶wietlane imiê \\ \hline
+\attr{employeeNumber} & inetOrgPerson & MAY & Identyfikator pracownika \\ \hline
+\attr{employeeType} & inetOrgPerson & MAY & Typ pracownika \\ \hline
+\attr{givenName} & inetOrgPerson & MAY & Imiê \\ \hline
+\attr{homePhone} & inetOrgPerson & MAY & Telefon domowy \\ \hline
+\attr{homePostalAddress} & inetOrgPerson & MAY & Adres domowy \\ \hline
+\attr{initials} & inetOrgPerson & MAY & Inicja³y \\ \hline
+\attr{jpegPhoto} & inetOrgPerson & MAY & Zdjêcie w formacie JPEG \\ \hline
+\attr{labeledURI} & inetOrgPerson & MAY & Adres URL \\ \hline
+\attr{mail} & inetOrgPerson & MAY & Adres mail \\ \hline
+\attr{manager} & inetOrgPerson & MAY & Nazwisko managera \\ \hline
+\attr{mobile} & inetOrgPerson & MAY & Telefon komórkowy \\ \hline
+\attr{o} & inetOrgPerson & MAY & Nazwa organizacji \\ \hline
+\attr{pager} & inetOrgPerson & MAY & Numer pagera \\ \hline
+\attr{photo} & inetOrgPerson & MAY & Zdjêcie w formacie G3 \\ \hline
+\attr{roomNumber} & inetOrgPerson & MAY & Numer pokoju \\ \hline
+\attr{secretary} & inetOrgPerson & MAY & Nazwisko sekretarki \\ \hline
+\attr{uid} & inetOrgPerson & MAY & Nazwa u¿ytkownika (login) \\ \hline
+\attr{userCertificate} & inetOrgPerson & MAY & Certyfikat u¿ytkownika \\ \hline
+\attr{x500uniqueIdentifier} & inetOrgPerson & MAY & Identyfikator u¿ytkownika \\ \hline
+\attr{preferredLanguage} & inetOrgPerson & MAY & Jêzyk \\ \hline
+\attr{userSMIMECertificate} & inetOrgPerson & MAY & Certyfikat PKCS\#7 \\ \hline
+\attr{userPKCS12} & inetOrgPerson & MAY & Certyfikat PKCS\#12 \\ \hline
+\end{longtable}}
+
+
+\section{Us³ugi}
+Podstawowa struktura katalogu przedstawiona w rozdziale \ref{sec:podstawowa-struktura-katalogu} mo¿e ju¿ przechowywaæ niezbêdne dane u¿ytkowników, jednak jest niewystarczaj±ca w celu udostêpniania u¿ytkownikom konkretnych us³ug. W~zale¿no¶ci od tego, jakie us³ugi maj± byæ udostêpniane konieczne mo¿e byæ dodanie do wpisów u¿ytkowników dodatkowych schematów a nastêpnie atrybutów, które pochodz± z~tych schematów. Mo¿liwe jest jednak opracowanie podstawowego schematu, który umo¿liwi wprowadzenie podstawowych danych o~u¿ytkowniku do katalogu, a~nastêpnie dodawanie do niego kolejnych schematów wymaganych przez nowo wprowadzane us³ugi.
+
+\subsection{Logowanie do systemu}
+\label{sec:logowanie}
+W~celu umo¿liwienia u¿ytkownikom LDAP logowania do systemu konieczne jest zarówno dostosowanie danych zawartych w katalogu, jak i~wprowadzenie pewnych modyfikacji w systemie operacyjnym.
+
+\subsubsection{LDAP}
+Aby logowanie w systemie by³o mo¿liwe do wpisu u¿ytkownika nale¿y dodaæ now± klasê \val{posixAccount} dostarczaj±ca pola opisane w tabeli \ref{tab:posixaccount} \cite{rfc2307} oraz klasê \val{shadowAccount} opisan± w tabeli \ref{tab:shadowaccount} \cite{rfc2307}. Klasa te jest zdefiniowana w pliku \texttt{nis.schema}, tak wiêc nale¿y ten plik za³±czyæ w konfiguracji serwera LDAP. Po dodaniu wymaganej klasy konieczne jest uzupe³nienie co najmniej atrybutów opisanych jako \texttt{MUST}.
+
+{\footnotesize
+\begin{longtable}{|c|c|l|}
+\caption{Atrybuty dostêpne w klasie \texttt{posixAccount}.}
+\label{tab:posixaccount}
+\\ \hline
+Atrybut & MUST/MAY & Opis \\ \hline
+\attr{cn} & MUST & Common name - imiê i~nazwisko \\ \hline
+\attr{uid} & MUST & Nazwa u¿ytkownika (login)  \\ \hline
+\attr{uidNumber} & MUST & Identyfikator u¿ytkownika \\ \hline
+\attr{gidNumber} & MUST & Identyfikator grupy \\ \hline
+\attr{homeDirectory} & MUST & Katalog domowy \\ \hline
+\attr{userPassword} & MAY & Has³o \\ \hline
+\attr{loginShell} & MAY & Pow³oka logowania \\ \hline
+\attr{gecos} & MAY & Dane u¿ytkownika (jak w pliku \texttt{/etc/passwd}) \\ \hline
+\attr{description} & MAY & Opis \\ \hline
+\end{longtable}}
+
+{\footnotesize
+\begin{longtable}{|c|c|l|}
+\caption{Atrybuty dostêpne w klasie \texttt{shadowAccount}\cite{man:shadow}}
+\label{tab:shadowaccount}
+\\ \hline
+Atrybut & MUST/MAY & Opis \\ \hline
+\attr{uid} & MUST & Nazwa u¿ytkownika (login)  \\ \hline
+\attr{userPassword} & MAY & Has³o \\ \hline
+\attr{shadowLastChange} & MAY & Data ostatniej zmiany has³a \\ \hline
+\attr{shadowMin} & MAY & Minimalny wiek has³a, kiedy jego zmiana bêdzie mo¿liwa \\ \hline
+\attr{shadowMax} & MAY & Wiek has³a, po którym u¿ytkownik bêdzie musia³ je zmieniæ \\ \hline
+\attr{shadowWarning} & MAY & Ilo¶æ dni przed wyga¶niêciem has³a, kiedy u¿ytkownik bêdzie ostrzegany \\ \hline
+\attr{shadowInactive} & MAY &  Ilo¶æ dni po wyga¶niêciu has³a, kiedy bêdzie ono jeszcze akceptowane\\ \hline
+\attr{shadowExpire} & MAY & Data wyga¶niêcia konta\footnote{Liczone w dniach od 1.01.1970} \\ \hline
+\attr{shadowFlag} & MAY & Pole zarezerwowane \\ \hline
+\attr{description} & MAY & Opis \\ \hline
+\end{longtable}}
+
+U¿ytkownik powinien posiadaæ tak¿e grupê, tak wiêc w katalogu utworzona zosta³a nowa jednostka organizacyjna \val{ou=groups} (\val{ou=groups,dc=icis,dc=pcz,dc=pl}). Wewn±trz tej jednostki utworzone zosta³y wpisy klasy \val{posixGroup} dla ka¿dego z~u¿ytkowników. Lista atrybutów dostarczanych przez klasê \texttt{posixGroup} znajduje siê w tabeli \ref{tab:posixgroup}.
+
+{\footnotesize
+\begin{longtable}{|c|c|l|}
+\caption{Atrybuty dostêpne w klasie \texttt{posixGroup}.}
+\label{tab:posixgroup}
+\\ \hline
+Atrybut & MUST/MAY & Opis \\ \hline
+\attr{cn} & MUST & Nazwa grupy \\ \hline
+\attr{gidNumber} & MUST & Numer grupy \\ \hline
+\attr{userPassword} & MAY & Has³o \\ \hline
+\attr{memberUid} & MAY & Numery UID cz³onków \\ \hline
+\attr{description} & MAY & Opis \\ \hline
+\end{longtable}}
+
+\subsubsection{System}
+Aby system operacyjny móg³ skorzystaæ z~danych zawartych w bazie LDAP konieczna jest instalacja odpowiednich bibliotek PAM \eng{Pluggable Authentication Modules}, NSS \eng{Name Service Switch} oraz narzêdzia \texttt{nslcd}.
+
+NSS pozwala na zdefiniowanie baz danych dla ró¿nych danych wykorzystywanych przez system. Lista baz oraz ¼ród³a danych okre¶lone s± w pliku konfiguracyjnym\linebreak{} \texttt{/etc/nsswitch.conf}\cite{man:nsswitchconf}:
+\begin{myitemize}
+\item passwd - baza dla danych u¿ytkowników (domy¶lnie \texttt{/etc/passwd}),
+\item group - baza grup systemowych (domy¶lnie \texttt{/etc/group}),
+\item shadow - baza hase³ (domy¶lnie \texttt{/etc/shadow}),
+\item hosts - baza hostów i~ich adresów IP (domy¶lnie \texttt{/etc/hosts}),
+\item networks - baza adresów sieci (domy¶lnie \texttt{/etc/networks}),
+\item protocols - baza nazw i~numerów protoko³ów (domy¶lnie \texttt{/etc/protocols}),
+\item services - baza us³ug i~numerów portów (domy¶lnie \texttt{/etc/services}),
+\item ethers - baza hostów i~ich adresów MAC (domy¶lnie \texttt{/etc/ethers}),
+\item rpc - baza numerów i~nazw RPC (domy¶lnie \texttt{/etc/rpc}),
+\item netgroup - lista hostów i~u¿ytkowników w sieci (domy¶lnie pobierana z~NIS).
+\end{myitemize}
+
+Jak widaæ domy¶lnie wiêkszo¶æ tych danych przechowywana jest w plikach tekstowych. Aby umo¿liwiæ pobieranie tych danych z~bazy LDAP konieczna jest instalacja modu³u \texttt{libnss-ldapd}. Po jego instalacji do pliku konfiguracyjnego mo¿na dopisaæ bazê \texttt{ldap} jako kolejne ¼ród³o danych dla baz \texttt{passwd}, \texttt{group} oraz \texttt{shadow}:
+\begin{verbatim}
+passwd:         compat ldap
+group:          compat ldap
+shadow:         compat ldap
+\end{verbatim}
+
+Kolejno¶æ ¼róde³ danych na li¶cie okre¶la te¿ w jakiej kolejno¶ci NSS bêdzie te ¼ród³a odpytywa³. Po konfiguracji ¼ród³a danych mo¿liwe jest ju¿ odpytanie bazy za pomoc± polecenia \texttt{getent}\cite{man:getent}:
+\begin{verbatim}
+root@student:~# getent passwd
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/bin/sh
+bin:x:2:2:bin:/bin:/bin/sh
+pbm:x:1000:1000:pbm,,,:/home/pbm:/bin/bash
+[...]
+pszubert:x:20000:20000:Pawe³ Szubert:/home/pszubert:/bin/bash
+ttestowy:x:20001:20001:Test Testowy:/home/ttestowy:/bin/bash
+\end{verbatim}
+
+Dwóch ostatnich u¿ytkowników o~numerach UID zaczynaj±cych siê od 20000 pochodzi z~bazy LDAP.
+
+Mechanizm PAM jest odpowiedzialny za autoryzacjê u¿ytkowników. Aplikacje (w tym sam system) korzystaj±ce z~PAM wysy³aj± zapytanie do podsystemu PAM, który na podstawie swojej konfiguracji przeprowadza odpowiedni± autoryzacjê u¿ytkownika, a~do samej aplikacji przesy³a jedynie informacjê o~tym czy autoryzacja siê powiod³a.
+
+PAM dzieli zadania zwi±zane z~autoryzacj± u¿ytkownika na cztery grupy\cite{man:pam}:
+\begin{myitemize}
+\item account - zadania zwi±zane z~obs³uga konta (wygasanie, itp),
+\item authentication - uwierzytelnienie - zweryfikowanie to¿samo¶ci osoby,
+\item password - zmiana has³a u¿ytkownika,
+\item session - zadania, które musz± byæ wykonane po uwierzytelnieniu u¿ytkownika.
+\end{myitemize}
+
+Domy¶lnie w Linuksie wszystkie te funkcje spe³nia modu³ \texttt{pam\_unix.so}, który przeprowadza uwierzytelnienie u¿ytkownika na podstawie wprowadzonego przez niego loginu i~has³a oraz bazy dostarczonej przez NSS\cite{pam-unix}.
+
+Modu³em odpowiedzialnym za autoryzacjê u¿ytkowników LDAP jest \texttt{libpam-ldapd}, który tak¿e znajduje siê w repozytorium dystrybucji Debian. 
+
+Kolejnym sk³adnikiem, który jest wymagany jest program \texttt{nslcd}, odpowiadaj±cy za przesy³anie zapytañ do serwera LDAP oraz za buforowanie wyników \cite{man:nslcd}.
+
+Po instalacji tych pakietów pojawia siê kreator, który dokonuje podstawowej konfiguracji modu³ów. W~kolejnych krokach kreatora nale¿y podaæ:
+\begin{myitemize}
+\item adres serwera LDAP,
+\item adres w bazie LDAP (DN) bêd±cy podstaw± przeszukiwania,
+\item bazy NSS jakie maj± byæ synchronizowane.
+\end{myitemize}
+
+W~tym przypadku bêd± to kolejno:
+\begin{myitemize}
+\item \texttt{ldap://127.0.0.1}
+\item \texttt{dc=icis,dc=pcz,dc=pl}
+\item bazy \texttt{group}, \texttt{passwd}, \texttt{shadow}
+\end{myitemize}
+
+Wszystkie opcje konfiguracyjne z~których korzystaj± te modu³y przechowywane s± w pliku \texttt{/etc/nslcd.conf}\cite{man:nslcdconf}.
+
+Po wprowadzeniu tych zmian w systemie mo¿liwe jest ju¿ lokalne i~zdalne logowanie siê u¿ytkowników LDAP za pomoc± has³a.
+
+\subsection{Dostêp zdalny}
+Zgodnie z~za³o¿eniami projektu logowanie zdalne do serwera mia³o byæ mo¿liwe przy u¿yciu kluczy SSH. Serwer OpenSSH pozwala na przeprowadzenie autoryzacji u¿ytkownika na podstawie pary kluczy: publicznego i~prywatnego. Klucz prywatny musi znajdowaæ siê na komputerze z~którego siê logujemy. Domy¶lne lokalizacje w których klient SSH szuka takiego klucza to:
+
+\begin{myitemize}
+\item \texttt{\tylda{}/.ssh/id\_dsa} dla kluczy korzystaj±cych z~algorytmu DSA,
+\item \texttt{\tylda{}/.ssh/id\_rsa} dla kluczy korzystaj±cych z~algorytmu RSA,
+\item \texttt{\tylda{}/.ssh/id\_ecdsa} dla kluczy korzystaj±cych z~algorytmu ECDSA,
+\item w przypadku protoko³u SSH w wersji 1 \texttt{\tylda{}/.ssh/identity},
+\end{myitemize}
+Mo¿liwe jest tak¿e wskazanie klientowi SSH innego pliku klucza prywatnego wprowadzaj±c jego ¶cie¿kê po opcji \texttt{-i} (\texttt{ssh -i /sciezka/do/pliku/klucza user@host}) lub poprzez odpowiednie wpisy w pliku konfiguracyjnym klienta SSH.
+
+Klucz publiczny u¿ytkownika umieszczany jest na serwerze na który siê logujemy w pliku \texttt{\tylda{}/.ssh/authorized\_keys}. W~pliku tym mo¿e znajdowaæ siê wiele kluczy publicznych.
+
+Przechowywanie kluczy publicznych u¿ytkowników w ich katalogach domowych jest zachowaniem domy¶lnym SSH, jednak w przypadku centralnej bazy u¿ytkowników (takiej jak katalog LDAP) po¿±dana jest mo¿liwo¶æ przechowywania ich tak¿e w tej samej bazie. W~domy¶lnej konfiguracji SSH nie posiada integracji z~katalogiem LDAP umo¿liwiaj±cej odczyt kluczy z~tego ¼ród³a. Istnieje jednak projekt \texttt{openssh-lpk} (OpenSSH LDAP Public Keys), dostarczaj±cy ³atkê \eng{patch}, która umo¿liwia wykonanie takiej integracji.
+
+Niestety pakiety OpenSSH dostêpne w repozytoriach Debiana nie posiadaj± na³o¿onej tej ³atki, tak wiêc konieczne jest jej rêczne na³o¿enie i~rekompilacja pakietu. Debian dostarcza pakiet OpenSSH w wersji 5.5p1, tak wiêc najlepszym rozwi±zaniem by³o przygotowanie pakietu z~na³o¿on± ³atk± w tej samej wersji oraz z~takimi samymi opcjami, jakie dostarcza domy¶lny pakiet.
+
+W~celu pobrania ¼róde³ pakietu OpenSSH w takiej formie w jakiej dostarczane s± poprzez programistów Debiana mo¿na pos³u¿y siê poleceniem \texttt{apt-get source openssh}. Po jego wykonaniu w aktualnym katalogu zostanie utworzony podkatalog \texttt{openssh-5.5p1} zawieraj±cy ¼ród³a pakietu. Pierwszym koniecznym do wykonania krokiem jest dodanie wpisu informuj±cego o~na³o¿eniu ³atki LPK w pliku \texttt{debian/changelog}:
+
+\begin{verbatim}
+openssh (1:5.5p1-7) unstable; urgency=low
+
+  * OpenSSH LPK support
+
+ -- Pawel Szubert <pawel.pbm@gmail.com>  Sat, 3 Sep 2011 19:09:29 +0000
+\end{verbatim}
+
+Nastêpnie nale¿y pobraæ plik ³atki i~na³o¿yæ go za pomoc± polecenia\linebreak{} \texttt{patch -p1 < ./plik.patch}. Po jego na³o¿eniu mo¿na przyst±piæ do zbudowania pakietu za pomoc± narzêdzia \texttt{dpkg-buildpackage}: \texttt{dpkg-buildpackage -us -uc}.
+
+W~wyniku wykonania tego polecenia powstanie kilka pakietów deb. Na komputerze, który ma korzystaæ z~danych LDAP nale¿y dokonaæ instalacji pakietów \texttt{openssh-client} oraz \texttt{openssh-server}. Po wykonaniu tej operacji konieczne jest ponowne uruchomienie us³ugi serwera SSH (\texttt{/etc/init.d/ssh restart}).
+
+Aby serwer SSH móg³ pobieraæ dane z~katalogu LDAP nale¿y jeszcze dokonaæ jego odpowiedniej konfiguracji. W~pliku konfiguracyjnym serwera (\texttt{/etc/ssh/sshd\_config}) nale¿y ustawiæ adres serwera LDAP, lokalizacjê (DN) u¿ytkowników oraz grup oraz wskazaæ konto u¿ytkownika za pomoc± którego serwer SSH bêdzie ³±czy³ siê do katalogu.
+
+\begin{verbatim}
+UseLPK yes
+LpkServers         ldap://127.0.0.1
+LpkUserDN          ou=users,dc=icis,dc=pcz,dc=pl
+LpkGroupDN         ou=groups,dc=icis,dc=pcz,dc=pl
+LpkBindDN          cn=admin,dc=icis,dc=pcz,dc=pl
+LpkBindPw          haslo
+LpkForceTLS        no
+LpkSearchTimelimit 3
+LpkBindTimelimit   3
+\end{verbatim}
+
+S± to wszystkie zmiany jakie nale¿y wprowadziæ po stronie systemu. Kolejnym krokiem jest wprowadzenie odpowiednich danych, czyli kluczy publicznych do katalogu LDAP. W~celu umo¿liwienia przechowywania kluczy publicznych w katalogu konieczne jest dodanie schematu zawieraj±cego odpowiednie pola do konfiguracji LDAP. Schemat taki jest zawarty w pliku \texttt{openssh-lpk\_openldap.schema} dostarczanym przez projekt \texttt{openssh-lpk}. W~pliku znajduje siê jedna klasa \val{ldapPublicKey} dostarczaj±ca jeden atrybut\linebreak{} \attr{sshPublicKey}.
+
+Po wprowadzeniu tych wszystkich zmian przy próbie zalogowania u¿ytkownika przy u¿yciu kluczy SSH, serwer SSH dokona sprawdzenia czy klucz taki nie znajduje siê w domy¶lnych lokalizacjach, a~nastêpnie je¶li odpowiedni klucz nie zostanie odnaleziony odwo³a siê do serwera LDAP.
+
+\subsection{Logowanie graficzne z~innych komputerów}
+System umo¿liwia tak¿e logowanie u¿ytkowników LDAP na komputerach dzia³aj±cych na uczelni. W~celu umo¿liwienia takiego logowania na ka¿dym z~komputerów nale¿y dokonaæ odpowiedniej konfiguracji bibliotek PAM i~NSS (zgodnie z~instrukcjami z~rozdzia³u \ref{sec:logowanie}).
+
+Dodatkowo, aby na komputerze na którym u¿ytkownik dokonuje logowania jako katalog domowy montowany by³ jego katalog domowy przechowywany na serwerze, konieczna jest instalacja i~odpowiednia konfiguracja modu³u PAM \texttt{pam-mount}. Jako, ¿e katalog montowany bêdzie za po¶rednictwem protoko³u SSH, konieczna jest tak¿e instalacja pakietu \texttt{sshfs}.
+
+\begin{verbatim}
+apt-get install libpam-mount sshfs
+\end{verbatim}
+
+Konfiguracja modu³u \texttt{pam-mount} odbywa siê poprzez plik \texttt{/etc/security/\linebreak{}pam\_mount.conf.xml} widoczny na listingu \ref{lst:pam-mount}.
+
+\begin{lstlisting}[language=C++,caption={Plik konfiguracyjny modu³u \texttt{pam-mount}},label={lst:pam-mount}]
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE pam_mount SYSTEM "pam_mount.conf.xml.dtd">
+<pam_mount>
+<debug enable="0" />
+<mntoptions allow="nosuid,nodev,loop,encryption,fsck,nonempty,allow_root,allow_other,user" />
+<mntoptions require="nosuid,nodev" />
+<fusemount>mount.fuse %(VOLUME) %(MNTPT) -o %(OPTIONS)</fusemount>
+<logout wait="10000" hup="yes" term="yes" kill="yes" /> 
+<mkmountpoint enable="1" remove="true" />
+<volume fstype="fuse" path="sshfs#%(USER)@student.icis.pcz.pl:" mountpoint="~" options="user,reconnect,nonempty" ssh="1"/>
+</pam_mount>
+\end{lstlisting}
+
+W~linii 7 pliku konfiguracyjnego zdefiniowane jest polecenie jakie ma zostaæ wywo³ane przy montowaniu. Szczegó³y dotycz±ce parametrów montowanego systemu plików znajduj± siê w linii 10. Kolejno wskazany jest typ systemu plików (\texttt{fuse}), ¶cie¿ka jaka ma zostaæ zamontowana (\texttt{sshfs\#\%(USER)@student.icis.pcz.pl:}, w miejscu zmiennej \texttt{\%(USER)} wstawiona zostanie nazwa u¿ytkownika, który siê loguje), katalog montowania oraz dodatkowe opcje. Parametr \texttt{ssh="1"} wskazuje, ¿e montowanie odbywa siê z wykorzystaniem protoko³u SSH, wiêc \texttt{pam-mount} musi skorzystaæ ze specjalnego narzêdzia, aby przekazaæ has³o do polecenia \texttt{ssh}, gdy¿ nie akceptuje ono hase³ podawanych na standardowe wej¶cie.
+
+Opcja \texttt{mkmountpoint} znajduj±ca siê w linii 9 wskazuje modu³owi, aby w przypadku w którym katalog montowania nie istnieje automatycznie go utworzy³, a~po odmontowaniu zdalnego systemu plików usun±³.
+
+Aby odmontowywanie systemu plików przebiega³o poprawnie przy wylogowywaniu siê poprzez GDM3 nale¿y zmodyfikowaæ skrypt \texttt{/etc/gdm3/PostSession/Default} w poni¿szy sposób:
+
+\begin{verbatim}
+#!/bin/sh
+fusermount -u -z ${HOME}
+exit 0
+\end{verbatim}
+
+Konieczne jest tak¿e dodanie linii zmieniaj±cych uprawnienia do plików FUSE w pliku \texttt{/etc/rc.local}:
+
+\begin{verbatim}
+chmod o+x /usr/bin/fusermount
+chmod o+rw /dev/fuse
+\end{verbatim}
+
+Ostatnim krokiem jest dodanie klucza SSH zdalnego komputera do pliku \texttt{/etc/ssh/\linebreak{}ssh\_known\_hosts}. Po wykonaniu tych zmian mo¿liwe jest ju¿ przeprowadzanie logowania z~automatycznym montowaniem katalogu domowego. Aby unikn±æ jednak komunikatu na temat b³êdu odczytu pliku \texttt{.ICEauthority}, konieczna jest zmiana jego lokalizacji. Zmiany takiej mo¿na dokonaæ poprzez wyeksportowanie zmiennej systemowej \texttt{ICEAUTHORITY}. Aby zmiana taka by³a automatycznie stosowana dla wszystkich u¿ytkowników na serwerze w katalogu \texttt{/etc/skel/} stworzony zosta³ plik \texttt{.gnomerc} z~nastêpuj±c± tre¶ci±:
+\begin{verbatim}
+mkdir "/tmp/.ICE-${USER}"
+export ICEAUTHORITY="/tmp/.ICE-${USER}/.ICEauthority"
+\end{verbatim}
+
+Podczas tworzenia u¿ytkownika na serwerze zawarto¶æ katalogu \texttt{/etc/skel/} kopiowana jest do katalogu domowego u¿ytkownika. Plik \texttt{.gnomerc} wykonywany jest przy uruchamianiu sesji GNOME, dziêki czemu zostan± wykonane zawarte w nim polecenia, czyli w katalogu \texttt{/tmp/} utworzony zostanie katalog \texttt{.ICE-nawa\_u¿ytkownika} i~w nim utworzony zostanie plik \texttt{.ICEauthority}.
+
+\subsection{GIT}
+\label{sec:git}
+W~celu udostêpnienia u¿ytkownikom repozytorium systemu kontroli wersji wybrany zosta³ pakiet GIT. Po instalacji oprogramowania GIT na serwerze u¿ytkownik mo¿e z~niego skorzystaæ uzyskuj±c dostêp do repozytorium za pomoc± protoko³u SSH. Oprogramowanie to nie posiada jednak mo¿liwo¶ci wspó³dzielenia repozytoriów, co by³o jednym z~za³o¿eñ projektu. W~celu uzyskania takiej funkcjonalno¶ci zdecydowano siê na opracowanie skryptu, który na podstawie konfiguracji udostêpniania repozytoriów przechowywanej w katalogu LDAP przyzna³by dostêp danemu u¿ytkownikowi do wybranego repozytorium lub takiego dostêpu odmówi³. 
+
+W~celu umo¿liwienia u¿ytkownikowi skorzystania z~repozytorium nale¿y do wpisu w katalogu LDAP u¿ytkownika udostêpniaj±cego repozytorium dodaæ nowy klucz publiczny - klucz u¿ytkownika chc±cego skorzystaæ z~repozytorium. Aby u¿ytkownik taki mia³ dostêp jedynie do narzêdzia GIT, a~nie móg³ dokonaæ za pomoc± tego klucza zwyk³ego logowania do systemu, wykorzystany zosta³ mechanizm SSH pozwalaj±cy na okre¶lenie we wpisie klucza publicznego polecenia, jakie po logowaniu za jego pomoc± zostanie wywo³ane.
+
+Przed wpisem klucza publicznego zosta³a dodana opcja \texttt{command="/var/student/\linebreak{}gitserver.py username"}, gdzie \texttt{username} jest nazw± u¿ytkownika chc±cego skorzystaæ z~repozytorium, a~tym samym w³a¶ciciela klucza publicznego. Podczas logowania za pomoc± tak opisanego klucza zostanie wywo³any skrypt \texttt{/var/student/gitserver.py} i~jako argument do niego zostanie przekazana nazwa u¿ytkownika.
+
+Dane dotycz±ce repozytoriów jakie s± udostêpniane oraz uprawnieñ do nich tak¿e przechowywane s± w katalogu LDAP. W~tym celu pod wpisem dla u¿ytkownika udostêpniaj±cego repozytorium tworzony jest nowy wpis klasy \val{organizationalUnit} \val{ou=git}, maj±cy na celu grupowanie wpisów dotycz±cych konkretnych repozytoriów.
+
+Repozytoria przechowywane s± w kolejnych wpisach klasy \val{repository}, która zosta³a przygotowana na potrzeby tego projektu. Klasa ta dostarcza trzy atrybuty:
+\begin{myitemize}
+\item \attr{repo} (lub \attr{repositoryName}),
+\item \attr{userRO},
+\item \attr{userRW}.
+\end{myitemize}
+Atrybut \attr{repo} jest atrybutem obowi±zkowym (opcja \texttt{MUST}), pozosta³e s± opcjonalne (opcja \texttt{MAY}). Atrybuty \attr{userRO} oraz \attr{userRW} mog± wystêpowaæ kilka razy z~ró¿nymi warto¶ciami. Okre¶laj± one osoby, które maj± dostêp z~uprawnieniami tylko do odczytu oraz do zapisu do danego repozytorium, którego dotyczy dany wpis, a~które okre¶lone jest za pomoc± atrybutu \texttt{repo}.
+
+Skrypt \texttt{gitserver.py} nawi±zuje po³±czenie z~katalogiem LDAP i~sprawdza czy dla repozytorium do którego u¿ytkownik siê ³±czy zosta³ zdefiniowany wpis klasy \val{repository} i~czy u¿ytkownik ten zosta³ wymieniony a atrybucie \attr{userRO} lub \attr{userRW}.
+
+W~czasie wykonania skryptu pierwszym krokiem jest pobranie zmiennej ¶rodowiskowej \texttt{SSH\_ORIGINAL\_COMMAND}. Zmienna ta zawiera oryginalne polecenie jakie zosta³o przekazane poprzez klienta SSH.
+
+W~przypadku nawi±zywania po³±czenia przez klienta git zmienna ta zawiera jedno z~poleceñ \texttt{git-upload-pack} lub \texttt{git-receive-pack}, a~nastêpnie ¶cie¿kê do repozytorium.
+
+Je¶li polecenie zawarte w zmiennej jest inne po³±czenie musi byæ zerwane, gdy¿ oznacza to, ¿e nie zosta³o ono nawi±zane przez klienta git:
+
+\begin{lstlisting}[language=Python,caption={Konfiguracja backendów autoryzacyjnych}]
+valid_commands = ('git-receive-pack', 'git-upload-pack',)
+if command not in valid_commands:
+    exit()
+\end{lstlisting}
+
+Kolejnym krokiem weryfikacji jest sprawdzenie jakie uprawnienia ma u¿ytkownik do danego repozytorium. W~tym celu wywo³ywana jest funkcja \texttt{check\_permissions} z~argumentami \texttt{owner\_name}, \texttt{guest\_name} oraz \texttt{repository}. Pierwszy z~parametrów okre¶la nazwê w³a¶ciciela repozytorium i~jest pobierany ze zmiennej ¶rodowiskowej \texttt{USER}. Kolejny to nazwa u¿ytkownika, który chce uzyskaæ dostêp do repozytorium. Nazwa ta jest zapisana w katalogu LDAP wraz z~kluczem publicznym i~jest przekazywana jako argument do skryptu \texttt{gitserver.py}. Warto¶æ zmiennej \texttt{repository} pobierana jest z~drugiej czê¶ci zmiennej \texttt{SSH\_ORIGINAL\_COMMAND}.
+
+Funkcja \texttt{check\_persmissions} nawi±zuje po³±czenie z~serwerem LDAP, przeszukuje DN \texttt{repo=repository,ou=git,uid=owner\_name,ou=users,dc=icis,dc=pcz,dc=pl} i~pobiera z~niego wpisy \texttt{userRO} i~\texttt{userRW}. Je¶li nazwa u¿ytkownika zostanie odnaleziona w atrybucie \texttt{userRO} funkcja zwraca warto¶æ 1, je¶li nazwa ta bêdzie w atrybucie \texttt{userRW} zostanie zwrócona warto¶æ 2. W~przypadku nie odnalezienia nazwy u¿ytkownika w ¿adnym z~tych atrybutów zwrócone zostanie 0.
+
+W~przypadku kiedy zostanie zwrócona warto¶æ 0 po³±czenie jest zakañczane. W~pozosta³ych przypadkach nastêpuje sprawdzenie czy polecenie przekazane w zmiennej\linebreak{} \texttt{SSH\_ORIGINAL\_COMMAND} odpowiada poziomowi uprawnieñ danego u¿ytkownika do repozytorium. W~przypadku polecenia \texttt{git-receive-pack} (czyli zapisu do repozytorium) wymagany poziom uprawnieñ to 2, natomiast w przypadku \texttt{git-upload-pack}, które odpowiada za odczyt danych z~repozytorium poziom to 1. Je¶li warto¶ci te nie zgadzaj± siê nastêpuje roz³±czenie u¿ytkownika. Je¶li natomiast polecenie, które u¿ytkownik chce wykonaæ zgodne jest z~jego uprawnieniami nastêpuje jego wykonanie. 
+
+%\section{Bezpieczeñstwo}
+
+\chapter{Portal}
+W~celu uproszczenia administracji danymi przechowywanymi w katalogu stworzony zosta³ portal umo¿liwiaj±cy u¿ytkownikom rejestracjê w serwisie, zarz±dzanie uprawnieniami do repozytoriów oraz wykonywanie podstawowych czynno¶ci administracyjnych w przypadku u¿ytkownika z~uprawnieniami administratora.
+
+\section{Wykorzystane biblioteki}
+Portal wykonany zosta³ w jêzyku Python przy u¿yciu frameworka Django. Dodatkowo wykorzystane zosta³y takie aplikacje Django jak \texttt{django\_auth\_ldap} i~\texttt{django-ldapdb}. Dodatkowo do stworzenia warstwy wizualnej portalu wykorzystana zosta³a biblioteka CSS i~Javascript Twitter Boostrap.
+
+\subsection{Django}
+Django jest to framework do tworzenia aplikacji internetowych napisany w jêzyku Python. Opiera siê on na zbli¿onym do MVC \eng{Model-View-Controller, Model-Widok-Kontroler} wzorcu projektowym nazwanym MVT \eng{Model-View-Template, Model-Widok-Szablon}. 
+
+Model definiuje struktury danych z~jakich korzystaæ bêdzie aplikacja. Utworzenie modelu polega na zdefiniowaniu klas dziedzicz±cych po klasie \texttt{models.Model}. Jednym ze sk³adników Django jest tak¿e system ORM \eng{Object-Relational Mapping, Mapowanie Obiektowo-Relacyjne}, który odpowiada za mapowanie zdefiniowanego modelu na strukturê bazy danych. ORM dostarcza tak¿e funkcje umo¿liwiaj±ce pobieranie i~dodawanie danych do bazy danych bez konieczno¶ci pisania zapytañ SQL. Wykorzystanie mechanizmu ORM pozwala na stworzenie aplikacji niezale¿nej od serwera bazodanowego. Odpowiednie modu³y Django t³umacz± kod programu na zapytania SQL dostosowane do wykorzystywanego silnika bazodanowego. W~chwili obecnej ORM Django (wersja 1.4) wspiera nastêpuj±ce silniki bazodanowe\cite{django:databases}:
+\begin{myitemize}
+\item PostgreSQL
+\item MySQL
+\item SQLite
+\item Oracle
+\end{myitemize}
+
+Widok jest odpowiedzialny za pobieranie danych od u¿ytkownika, przetwarzanie ich i~odsy³anie do u¿ytkownika. Kiedy u¿ytkownik wchodzi na konkretn± stronê serwisu internetowego mechanizm Django o~nazwie \texttt{URL dispatcher} mapuje wywo³any adres na konkretn± funkcjê widoku. Do widoku przesy³ane jest ca³e zapytanie u¿ytkownika w postaci obowi±zkowego parametru \texttt{request} zawieraj±cego miedzy innymi parametry GET i~POST. Po przetworzeniu takiego ¿±dania funkcja widoku zwraca obiekt klasy \texttt{HttpResponse}, zawieraj±cy odpowied¼.
+
+Szablony Django odpowiadaj± za generowanie strony internetowej. Szablon jest to zazwyczaj plik HTML zawieraj±ce specjalne znaczniki Django pozwalaj±ce na wstawianie do kodu HTML zmiennych jêzyka Python. Jêzyk szablonów Django zawiera tak¿e podstawowe instrukcje steruj±ce.
+
+\subsection{\texttt{django\_auth\_ldap}}
+Django dostarcza mechanizm autoryzacji u¿ytkowników z~zaawansowanym systemem grup i~uprawnieñ\cite{django:auth}. Domy¶lnie mechanizm ten jest obs³ugiwany przez backend ModelBackend, dla którego ¼ród³em danych na temat u¿ytkowników, grup i~uprawnieñ s± dane przechowywane w modelu \texttt{User}, który przechowywany jest w domy¶lnej bazie danych. Aplikacja \texttt{django\_auth\_ldap} dostarcza backend autoryzacji dla którego ¼ród³em danych jest katalog LDAP \cite{python:authldap}.
+
+Aby w³±czyæ wykorzystanie tej aplikacji nale¿y pliki aplikacji umie¶ciæ w jednym z~katalogów zdefiniowanych w zmiennej systemowej \texttt{PYTHONPATH}. Nastêpnie nale¿y zmodyfikowaæ plik ustawieñ aplikacji (\texttt{settings.py}), dodaj±c ten backend jako kolejny w zmiennej \texttt{AUTHENTICATION\_BACKENDS}:
+\begin{lstlisting}[language=Python,caption={Konfiguracja backendów autoryzacyjnych}]
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'django_auth_ldap.backend.LDAPBackend',
+)
+\end{lstlisting}
+
+Konfiguracji backendu dokonuje siê poprzez ustawienie kilku zmiennych w tym samym pliku konfiguracyjnym:
+\begin{lstlisting}[language=Python,caption={Konfiguracja backendów autoryzacyjnych}]
+LDAP_SUFFIX = 'dc=icis,dc=pcz,dc=pl' 
+AUTH_LDAP_SERVER_URI = 'ldap://127.0.0.1/'
+AUTH_LDAP_BIND_DN = ""
+AUTH_LDAP_BIND_PASSWORD = ""
+AUTH_LDAP_USER_SEARCH = LDAPSearch("ou=users," + LDAP_SUFFIX, ldap.SCOPE_SUBTREE, "(uid=%(user)s)")
+\end{lstlisting}
+
+W~pierwszej ze zmiennych okre¶lamy adres serwera LDAP. Ustawienie pustej zmiennej \texttt{bind dn} oraz \texttt{bind password} oznacza, ¿e bêdziemy dokonywali bindowania anonimowego. W~ostatniej zmiennej okre¶lamy jak ma wygl±daæ zapytanie przeszukuj±ce drzewo LDAP w poszukiwaniu kont u¿ytkowników. W~tym przypadku konta przechowywane s± w jednostce organizacyjnej \val{ou=users} i~definiowane s± za pomoc± atrybutu \attr{uid}. 
+
+\subsection{\texttt{djnago-ldapdb}}
+Aplikacja \texttt{django-ldapdb} rozszerza mo¿liwo¶ci mechanizmu ORM o~zarz±dzanie katalogiem LDAP w taki sam sposób w jaki zarz±dza on innymi bazami danych, czyli z~wykorzystaniem mechanizmu modeli. Model korzystaj±cy z~bazy LDAP musi dziedziczyæ po klasie \texttt{ldapdb.models.Model}.
+
+Oprócz standardowych zmiennych, które zostan± zmapowane na bazê danych model korzystaj±cy z~biblioteki \texttt{django-ldapdb} musi posiadaæ ustawione dwie zmienne: \texttt{base\_dn} oraz \texttt{object\_classes}.
+
+Pierwsza z~nich okre¶la DN danego wpisu, czyli pozycjê w katalogu LDAP gdzie obiekty danej klasy bêd± siê znajdowa³y. Druga zmienna odpowiada za ustawienie obiektom odpowiednich atrybutów \attr{objectClass}. Je¶li w katalogu znajduj± siê ju¿ jakie¶ obiekty i~chcemy aby by³y one traktowane jako obiekty danej klasy musz± one mieæ ustawione identyczne warto¶ci \attr{objectClass} jak te podane w zmiennej \texttt{object\_class}.
+
+Konfiguracji bazy danych dokonuje siê w pliku \texttt{settings.py}:
+\begin{lstlisting}[language=Python,caption={Konfiguracja biblioteki \texttt{django-ldapdb}}]
+DATABASES = {
+    'ldap': {
+        'ENGINE': 'ldapdb.backends.ldap',
+        'NAME': 'ldap://127.0.0.1/',
+        'USER': 'cn=admin,dc=icis,dc=pcz,dc=pl',
+        'PASSWORD': 'HAS£O',
+     }
+ }
+DATABASE_ROUTERS = ['ldapdb.router.Router']
+\end{lstlisting}
+
+Po dodaniu bazy i~utworzeniu modelu ka¿da funkcja odwo³uj±ca siê do niego bêdzie dzia³a³a ju¿ na danych z~katalogu LDAP.
+
+\subsection{Twitter Bootstrap}
+Biblioteka Twitter Bootstrap dostarcza zestaw klas CSS oraz funkcji Javascript do tworzenia komponentów interfejsu u¿ytkownika takich jak przyciski, okna czy menu.
+
+Podstawowym sk³adnikiem biblioteki jest dwunastokolumnowa siatka do tworzenia uk³adu strony. Dziêki wykorzystaniu klas CSS \texttt{row} i~\texttt{spanX} mo¿liwe jest utworzenie wierszy i~kolumn na stronie z~elementów \texttt{div}. Upraszcza to tworzenie struktury strony oraz podzia³ jej na czê¶ci takie jak nag³ówek, stopka, cze¶æ g³ówna czy menu.
+
+Kolejna czê¶æ biblioteki odpowiada za odpowiednie ostylowanie elementów HTML takich jak odno¶niki,  tabele czy formularze.
+
+Ostatnim komponentem jest zestaw skryptów Javascript wykorzystuj±cych bibliotekê jQuery i~pozwalaj±cych na proste tworzenie dynamicznych elementów takich jak okienka komunikatów, rozwijane menu czy alerty.
+
+
+\section{Model}
+\label{sec:model}
+Na potrzeby aplikacji zosta³y stworzone dwie klasy reprezentuj±ce u¿ytkownika oraz klasa reprezentuj±ca grupê.
+
+Pierwsz± z~klas jest \texttt{TemporaryUser}, czyli model przechowywany w bazie SQLite maj±cy na celu przechowywanie danych u¿ytkownika zanim zostan± one zaakceptowane przez administratora i~przeniesione do katalogu LDAP. Klasa ta zawiera atrybuty przedstawione na rysunku \ref{rys:klasa-temporaryuser}.
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics{temporaryuser}
+\caption{Klasa \texttt{TemporaryUser}}
+\label{rys:klasa-temporaryuser}
+\end{center}
+\end{figure}
+
+Kolejn± klas± jest \texttt{LdapUser}, która reprezentuje u¿ytkownika po zapisaniu go do bazy danych. Atrybuty zdefiniowane w tej klasie zaprezentowane s± na rysunku \ref{rys:klasa-ldapuser}. Dodatkowo zmienne \texttt{base\_dn} oraz \texttt{object\_classes} zosta³y ustawione w sposób zaprezentowany na listingu \ref{lst:ldapuser-zmienne}.
+
+\begin{lstlisting}[language=Python,caption={Zmienne \texttt{base\_dn} oraz \texttt{object\_classes} w klasie \texttt{LdapUser}},label={lst:ldapuser-zmienne}]
+base_dn = "ou=users," + LDAP_SUFFIX
+object_classes = ['top', 'posixAccount', 'person', 'organizationalPerson', 'inetOrgPerson', 'ldapPublicKey', 'shadowAccount']
+\end{lstlisting}
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics{ldapuser}
+\caption{Klasa \texttt{LdapUser}}
+\label{rys:klasa-ldapuser}
+\end{center}
+\end{figure}
+
+
+Klasa reprezentuj±ca grupy, czyli \texttt{LdapGroup}, zosta³a zdefiniowana w sposób widoczny na rysunku \ref{rys:klasa-ldapgroup}, natomiast sposób ustawienia zmiennych na listingu \ref{lst:ldapgroup-zmienne}.
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics{ldapgroup}
+\caption{Klasa \texttt{LdapGroup}}
+\label{rys:klasa-ldapgroup}
+\end{center}
+\end{figure}
+
+\begin{lstlisting}[language=Python,caption={Zmienne \texttt{base\_dn} oraz \texttt{object\_classes} w klasie \texttt{LdapGroup}},label={lst:ldapgroup-zmienne}]
+base_dn = "ou=groups," + LDAP_SUFFIX
+object_classes = ['posixGroup', 'top']
+\end{lstlisting}
+
+Dodatkowo oprócz tych modeli, które zdefiniowane s± na sta³e, w pliku \texttt{models.py} znajduj± siê dwie funkcje, które w locie generuj± klasy. Klasy te tworz± obiekty przechowuj±ce wpisy dla repozytoriów oraz dla grupowania repozytoriów. Mechanizm dynamicznego generowanie klas zastosowany zosta³ ze wzglêdu na konieczno¶æ wype³nienia zmiennych wewn±trz klasy na podstawie tego dla jakiego u¿ytkownika tworzymy model. W~takiej sytuacji nie mo¿na by³o skorzystaæ z~mechanizmu konstruktorów, gdy¿ modele Django czêsto wykorzystuj± metody klas, które nie s± wywo³ywane na instancji klasy, lecz na niej samej.
+
+Funkcje te to \texttt{repo\_entry()} oraz \texttt{git\_entry()}. Obie z~nich jako parametr przyjmuj± nazwê u¿ytkownika, a~zwracaj± kolejno klasê \texttt{RepoEntry\_username} i~\texttt{GitEntry\_username}. Kod funkcji \texttt{git\_entry} przedstawiony zosta³ na listingu \ref{lst:funkcja-gitentry}.
+
+\begin{lstlisting}[language=Python,caption={Funkcja \texttt{GitEntry()}},label={lst:funkcja-gitentry}]
+def git_entry(username):
+    base_dn = "uid=" + username +",ou=users,"+ LDAP_SUFFIX
+    object_classes = ['top', 'organizationalUnit']
+
+    ou = LDAPCharField(db_column='ou', max_length=200, primary_key=True)
+
+    class Meta:
+        app_label = "label"
+        managed = False
+        verbose_name = 'GitEntry'
+        verbose_name_plural = 'GitEntry'
+    attrs = {}
+    attrs['__module__'] = 'management.models'
+    attrs['Meta'] = Meta
+    attrs['base_dn'] = base_dn
+    attrs['username'] = username
+    attrs['object_classes'] = object_classes
+    attrs['ou'] = ou
+
+    return type('GitEntry_' + username.encode('ascii','ignore'), (ldapdb.models.Model,), attrs)
+\end{lstlisting}
+
+W~linii 2 widzimy inicjalizacjê zmiennej \texttt{base\_dn} na postawie nazwy u¿ytkownika. Nastêpnie tworzony jest atrybut \texttt{ou} typu \texttt{LDAPCharField}. Parametry jakie s± wype³niane przy tworzeniu tego atrybutu oznaczaj± kolejno:
+\begin{myitemize}
+\item atrybut ten bêdzie przechowywany jako atrybut LDAP o~nazwie \texttt{ou},
+\item maksymalna d³ugo¶æ tekstu to 200 znaków,
+\item atrybut ten jest kluczem publicznym, czyli w katalogu LDAP zostanie wykorzystany do stworzenia DN wpisu.
+\end{myitemize}
+
+W~linii 7 utworzona jest subklasa \texttt{Meta}\cite{django:meta}. Klasa ta definiuje ustawienia danego modelu. W~tym przypadku okre¶la ona nazwê aplikacji w jakiej model jest definiowany, to czy Django ma zajmowaæ siê zarz±dzaniem struktur± bazy danych oraz nazwê jak± dany model bêdzie mia³ w panelu administracyjnym.
+
+W~kolejnych linijkach tworzony jest s³ownik \texttt{attrs} i~wype³niane s± jego pola. S³ownik ten pos³u¿y do stworzenia atrybutów funkcji.
+
+W~ostatniej linii zwracany jest wynik wywo³ania funkcji \texttt{type}\cite{python:type} pochodz±cej ze standardowej biblioteki Pythona. Funkcja ta przyjmuje trzy atrybuty: nazwê, klasê nadrzêdn± oraz s³ownik zawieraj±cy atrybuty i~zwraca klasê utworzon± na podstawie tych danych. Jest ona dynamiczn± wersj± wyra¿enia \texttt{class}.
+
+\section{Rejestracja i~aktywacja u¿ytkownika}
+\subsection{Rejestracja}
+U¿ytkownik, aby otrzymaæ konto na serwerze musi dokonaæ rejestracji za po¶rednictwem portalu. Podczas dokonywania rejestracji wprowadzane s± nastêpuj±ce dane:
+\begin{myitemize}
+\item nazwa u¿ytkownika, 
+\item imiê,
+\item nazwisko,
+\item adres e-mail,
+\item has³o,
+\item klucz publiczny SSH,
+\item rok studiów.
+\end{myitemize}
+
+Formularz rejestracji generowany jest na podstawie klasy \texttt{RegistrationForm}, dziedzicz±cej po dostarczanej przez Django klasie \texttt{forms.Form}. \texttt{RegistrationForm} posiada atrybuty definiuj±ce poszczególne pola formularza. Przyk³adowo pole ``Nazwisko'' generowane jest na podstawie kodu przedstawionego na listingu \ref{lst:registrationform-nazwisko}. Pole to jest obiektem klasy \texttt{forms.CharField}. Parametry przekazane do konstruktora okre¶laj± maksymaln± ilo¶æ tekstu jak± dane pole mo¿e pomie¶ciæ oraz etykietê pola.
+
+\begin{lstlisting}[language=Python,numbers=none,caption={Definicja pola nazwisko},label={lst:registrationform-nazwisko}]
+surname = forms.CharField(max_length=200, label='Nazwisko')
+\end{lstlisting}
+
+Kolejne pola formularza zosta³y zdefiniowane przy wykorzystaniu takich klas jak\linebreak{} \texttt{EmailField}, \texttt{BooleadField} oraz \texttt{ChoiceField}. To jakiej klasy jest dane pole ma wp³yw na to za pomoc± jakiego elementu HTML zostanie ono wyrenderowane oraz to czy i~w jaki sposób zostanie wykonana walidacja danych takiego pola. Przyk³adowo pole klasy \texttt{EmailField} zostanie wy¶wietlone jako element HTML \texttt{<input type=text>}, a~klasy \texttt{BooleanField} jako \texttt{<input type=checkbox>}. Dodatkowo na polu \texttt{EmailField} zostanie przeprowadzone sprawdzenie czy wprowadzona warto¶æ jest adresem e-mail.
+
+W~klasie \texttt{RegistrationForm} zdefiniowane zosta³y tak¿e funkcje \texttt{clean\_NAZWA\_POLA}\cite{django:clean}. Funkcje te pozwalaj± na stworzenie dodatkowych regu³ walidacji pola. S± one wywo³ywane na obiekcie pola dla, którego zosta³y zdefiniowane, a~po przetworzeniu lub dokonaniu walidacji zwracaj± warto¶æ tego pola.
+
+Przyk³adowo dla pola zawieraj±cego klucz publiczny SSH zdefiniowana zosta³a funkcja \texttt{clean\_ssh\_public\_key()} widoczna na listingu \ref{lst:clean-ssh}.
+
+\begin{lstlisting}[language=Python,caption={Funkcja \texttt{confirm()}},label={lst:clean-ssh}]
+def clean_ssh_public_key(self):
+    ssh_public_key = self.cleaned_data.get('ssh_public_key')
+    try:
+        key_type, data, _ = ssh_public_key.split()
+        data = base64.decodestring(data)
+        int_len = 4
+        str_len = struct.unpack('>I', data[:int_len])[0]
+        if not data[int_len:int_len+str_len] == key_type:
+            self._errors["ssh_public_key"] = self.error_class(["Nieprawid³owy klucz."])
+    except:
+        self._errors["ssh_public_key"] = self.error_class(["Nieprawid³owy klucz."])
+    return ssh_public_key
+\end{lstlisting}
+
+W~drugiej linii funkcji pobieramy warto¶æ pola a nastêpnie w klauzuli \texttt{try} dzielimy warto¶æ klucza na trzy czê¶ci. Na listingu \ref{lst:klucz-publiczny} widoczny jest przyk³adowy klucz publiczny przed podzia³em i~po podziale. Zmienna \texttt{key\_type} zawiera typ klucza, \texttt{data} jego zawarto¶æ, a~\texttt{\_} komentarz, który jest ignorowany. Nastêpnie w pi±tej linii dane klucza s± dekodowane za pomoc± funkcji \texttt{base64.decodestring()} i~nastêpuje sprawdzenie czy typ klucza zawarty w zmiennej \texttt{key\_type} (czyli w pierwszym fragmencie klucza) zgodny jest z~tym zakodowanym w danych klucza. Je¶li tak to klucz uznawany jest za prawid³owy. W~przeciwnym przypadku wy¶wietlany jest b³±d.
+
+\begin{lstlisting}[language=Python,numbers=none,caption={Przyk³adowy klucz publiczny SSH przed podzia³em i~po podziale w funkcji \texttt{clean\_ssh\_public\_key()}},label={lst:klucz-publiczny},breaklines=false]
+ssh_public_key = "ssh-dss AAAAB3NzaC1kc3MAAACBAIvRh9ALPHvkqXqCB
+vO2PzKwBiLTCP40bevM4y1bOcdSFzF0BqRh16kkTyfCS6xNzEwZVjf0u29ig3tS
+1zAZO7v40AM03UDeDPg3F+Z43Q2dSVgeURuA6f9xJKu8+OhbQasl4WZ6Qwi7Rsk
+Bi9edIABmkBXuh7bLxzhccMWTkwIjAAAAFQDWiyOCUA1QdvHmX2CU+rwOLk5+Dw
+AAAIBuiwkBAp7SIyZnRuMQG6+YJ/dy+i2aTocJ2ypLNfpCBrrwN1u77IY3iYrE6
+yqLg1tOULCbe7sFJeiXzocaBEfbC71LCaDJ+ESsXB8Sa1aTq9vMH3bAuZqhc//C
+XHvw17NWi1RcPsTwiFiODQoRlawd+Oryi/PX9wZWffGb1PkswwAAAIA0BDFUfHj
+XMNPu227I3mR8/Amue91zkIbEIR+QEyesXYgqgN57C3sPZ7vohkqOCgTCfRqMSY
+Bh+nXW6mxis9TSwg/lm22lvZ3rRuNr5aD500co25OFgagaACn0NGVmfOi+FJMFx
+qki4xHcVivIoZN49PVfM8BbVr+kSORVX9yHbg== pbm@tauri"
+
+key_type = "ssh-dss"
+
+data = "AAAAB3NzaC1kc3MAAACBAIvRh9ALPHvkqXqCBvO2PzKwBiLTCP40bev
+M4y1bOcdSFzF0BqRh16kkTyfCS6xNzEwZVjf0u29ig3tS1zAZO7v40AM03UDeDP
+g3F+Z43Q2dSVgeURuA6f9xJKu8+OhbQasl4WZ6Qwi7RskBi9edIABmkBXuh7bLx
+zhccMWTkwIjAAAAFQDWiyOCUA1QdvHmX2CU+rwOLk5+DwAAAIBuiwkBAp7SIyZn
+RuMQG6+YJ/dy+i2aTocJ2ypLNfpCBrrwN1u77IY3iYrE6yqLg1tOULCbe7sFJei
+XzocaBEfbC71LCaDJ+ESsXB8Sa1aTq9vMH3bAuZqhc//CXHvw17NWi1RcPsTwiF
+iODQoRlawd+Oryi/PX9wZWffGb1PkswwAAAIA0BDFUfHjXMNPu227I3mR8/Amue
+91zkIbEIR+QEyesXYgqgN57C3sPZ7vohkqOCgTCfRqMSYBh+nXW6mxis9TSwg/l
+m22lvZ3rRuNr5aD500co25OFgagaACn0NGVmfOi+FJMFxqki4xHcVivIoZN49PV
+fM8BbVr+kSORVX9yHbg=="
+
+_ = "pbm@tauri"
+
+\end{lstlisting}
+
+
+Na postawie wprowadzonych danych w widoku \texttt{registration()} tworzony jest nowy obiekt klasy \texttt{TemporaryUser}. Wa¿nym elementem jest tu funkcja \texttt{strip\_polish\_letters()}, która odpowiada za oczyszczenie nazwy u¿ytkownika (loginu) z~polskich znaków. Dodatkowo w obiekcie tym zmienna \texttt{confirmed} ustawiana jest na warto¶æ \texttt{False} oraz za pomoc± funkcji \texttt{generate\_confirmation\_link()} generowany jest losowy adres odno¶nika potwierdzaj±cego. Tak utworzony obiekt zapisywany jest w bazie danych SQLite, a~nastêpnie na adres e-mail wysy³ana jest wiadomo¶æ z~linkiem potwierdzaj±cym (rys. \ref{rys:email-potwierdzajacy}).
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=\textwidth]{email-potwierdzajacy}
+\caption{Wiadomo¶æ e-mail z~linkiem potwierdzaj±cym}
+\label{rys:email-potwierdzajacy}
+\end{center}
+\end{figure}
+
+W~momencie potwierdzenia przez u¿ytkownika adresu e-mail, poprzez klikniêcie na odno¶nik zawarty w wiadomo¶ci wywo³ywany jest widok \texttt{confirm()} do, którego jako parametr przekazywany jest klucz potwierdzaj±cy bêd±cy ostatni± czê¶ci± odno¶nika. Na tej podstawie w bazie odnajdywany jest u¿ytkownik, którego adres jest potwierdzany (listing \ref{lst:funkcja-confirm}, linia 4). W~przypadku je¶li dane konto zosta³o ju¿ potwierdzone u¿ytkownik jest o~tym informowany odpowiednim komunikatem. Je¶li konto nie jest jeszcze potwierdzone zmienna \texttt{confirmed} ustawiana jest na warto¶æ \texttt{True}, a~u¿ytkownikowi wy¶wietlany jest komunikat informuj±cy, ¿e w³a¶nie dokona³ potwierdzenia konta.
+
+W~przypadku kiedy funkcja \texttt{TemporaryUser.objects.get()} odnajduj±ca u¿ytkownika w bazie zwróci wyj±tek \texttt{ObjectDoesNotExist}, oznaczaj±cy, ¿e u¿ytkownik o~takim linku potwierdzaj±cym nie zosta³ znaleziony w bazie wy¶wietlany jest komunikat b³êdu.
+
+\begin{lstlisting}[language=Python,caption={Funkcja \texttt{confirm()}},label={lst:funkcja-confirm}]
+def confirm(request, activation_key):
+    form = LogInForm()
+    try:
+        user = TemporaryUser.objects.get(confirmation_link=activation_key)
+	if user.confirmed:
+            return render_to_response('invitation.html',  {'confirmed': 1, 'form': form}, context_instance=RequestContext(request))
+	user.confirmed = True
+        user.save()
+	return render_to_response('invitation.html',  {'confirmed': 2, 'form': form}, context_instance=RequestContext(request))
+    except ObjectDoesNotExist:
+        return render_to_response('invitation.html',  {'confirmed': 3, 'form': form}, context_instance=RequestContext(request))
+\end{lstlisting}
+
+Wy¶wietlanie komunikatów informacyjnych dotycz±cych potwierdzenia adresu zrealizowane jest na postawie parametru \texttt{confirmed}, jaki przekazywany jest do szablony strony g³ównej \texttt{invitation.html}. Parametr ten mo¿e przyjmowaæ trzy warto¶ci:
+\begin{myitemize}
+\item 1 - kiedy konto zosta³o ju¿ wcze¶niej potwierdzone,
+\item 2 - kiedy konto zosta³o teraz potwierdzone,
+\item 3 - kiedy dany link aktywacyjny nie zosta³ odnaleziony w bazie,
+\item 4 - wykorzystywany przy rejestracji konta, w widoku \texttt{registration()}.
+\end{myitemize}
+
+Przyczyn± nieodnalezienia linka w bazie mo¿e byæ na przyk³ad jego uszkodzenie przez program pocztowy, niepe³ne skopiowanie do przegl±darki przez u¿ytkownika lub te¿ usuniêcie lub aktywowanie konta tymczasowego przez administratora portalu.
+
+W~kodzie szablonu \texttt{invitation.html} (listing \ref{lst:confirmed}) zawarty jest warunek sprawdzaj±cy czy parametr \texttt{confirmed} zosta³ przekazany (linia 1). Je¶li tak nastêpuje wygenerowanie obiektu \texttt{div} z~klasami \texttt{modal} oraz \texttt{fade} pochodz±cymi z~biblioteki Twitter Bootstrap. Wewn±trz tego obiektu zawarte s± kolejne elementy \texttt{div} tworz±ce nag³ówek, tre¶æ oraz stopkê okna. W~czê¶ci zawieraj±cej w³a¶ciw± tre¶æ okna znajduj± siê kolejne instrukcje \texttt{if} sprawdzaj±ce warto¶æ zmiennej \texttt{confirmed} i~wypisuj±ce odpowiedni± tre¶æ komunikatu.
+
+\begin{lstlisting}[language=HTML,caption={Wy¶wietlanie komunikatu potwierdzenia},label={lst:confirmed}]
+{% if confirmed %}
+    <div class="modal fade" id="activationModal">
+    <div class="modal-header">
+    <a class="close" data-dismiss="modal">x</a>
+    <h3>Potwierdzenie konta</h3>
+    </div>
+    <div class="modal-body">
+    <p>
+      {% if confirmed == 1 %}To konto zosta³o ju¿ potwierdzone. Prosimy poczekaæ na jego aktywacjê przez administratora. {% endif %}
+      {% if confirmed == 2 %}Dziêkujemy za potwierdzenie konta. Prosimy poczekaæ na jego aktywacjê przez administratora. {% endif %}
+      {% if confirmed == 3 %}Odno¶nik potwierdzaj±cy nieprawid³owy. Byæ mo¿e konto zosta³o ju¿ aktywowane. {% endif %}
+      {% if confirmed == 4 %}Dziêkujemy za rejestracjê. Na podany adres mailowy zosta³ przes³any odno¶nik potwierdzaj±cy. {% endif %}
+
+    </p>
+    </div>
+    <div class="modal-footer">
+    <a href="#" class="btn" id="close-modal-btn">Zamknij</a>
+    </div>
+    </div>
+{% endif %}
+\end{lstlisting}
+
+\subsection{Aktywacja}
+Dane u¿ytkowników tymczasowych mo¿na przegl±daæ poprzez Panel administratora (rys. \ref{rys:admin-temporaryuser}).
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics{admin-temporaryuser}
+\caption{Dane u¿ytkownika tymczasowego w panelu administracyjnym}
+\label{rys:admin-temporaryuser}
+\end{center}
+\end{figure}
+
+Aby wybrane modele by³y dostêpne w panelu administratora nale¿y je w nim zarejestrowaæ. Rejestracja taka odbywa siê poprzez wywo³anie w pliku \texttt{admin.py} funkcji \texttt{admin.site.register()}. Funkcja ta przyjmuje dwa argumenty. Pierwszym z~nich jest nazwa modelu, który chcemy zarejestrowaæ w panelu administracyjnym, a~drugi to nazwa klasy, które definiuje parametry wy¶wietlania takiego modelu. Wewn±trz klasy tej poprzez odpowiednie zmienne mo¿na na przyk³ad wykluczyæ wy¶wietlanie pewnych pól.
+
+Równie¿ przez Panel administratora dokonuje siê aktywacji konta u¿ytkownika (rys. \ref{rys:admin-activate}). W~celu dodania opcji aktywacji do zestawu standardowych akcji Panelu administracyjnego w Klasie \texttt{TemporaryUserAdmin} zdefiniowanej w pliku \texttt{admin.py} stworzona zosta³a funkcja \texttt{activate()}. Funkcja ta jako parametry przyjmuje \texttt{request} (jak w przypadku widoku) oraz obiekt \texttt{queryset}, zawieraj±cy listê obiektów zaznaczonych na li¶cie.
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=\textwidth]{admin-activate}
+\caption{Aktywacja konta}
+\label{rys:admin-activate}
+\end{center}
+\end{figure}
+
+Pierwszym krokiem jest sprawdzenie czy w parametrach przes³anych jako POST znajduje siê warto¶æ \texttt{apply\_update}. Je¶li tak, oznacza to, ¿e nale¿y dokonaæ aktywacji wszystkich dostêpnych kont znajduj±cych siê w parametrze \texttt{queryset}. Je¶li parametr ten nie wystêpuje oznacza to, ¿e przechodzimy do dalszej czê¶ci kodu. Za sekcj± \texttt{if} nastêpuje rozbicie obiektu \texttt{queryset} na dwie zmienne - \texttt{queryset\_without\_confirmation} oraz \texttt{queryset\_with\_confirmation}. W~pierwszej zmiennej znajduj± siê wszyscy u¿ytkownicy tymczasowi zaznaczeni na li¶cie, którzy nie dokonali potwierdzenia adresu e-mail, natomiast w drugiej u¿ytkownicy, który potwierdzili adres. 
+
+Dla obiektów zawartych w zmiennej \texttt{queryset\_with\_confirmation} tworzony jest obiekt \texttt{LdapUser}. Do konstruktora przekazywane s± kolejno nastêpuj±ce parametry:
+\begin{myitemize}
+\item \texttt{cn} - imiê i~nazwisko,
+\item \texttt{gid\_number} - numer wygenerowany w funkcji \texttt{generate\_uid\_number()} i~zapisany w zmiennej \texttt{newUid}
+\item \texttt{sn} - nazwisko,
+\item \texttt{uid} - nazwa u¿ytkownika,
+\item \texttt{uid\_number} - numer zawarty w zmiennej \texttt{netUid},
+\item \texttt{ssh\_public\_key} - klucz publiczny, jako jednoelementowa lista,
+\item \texttt{user\_password} - has³o,
+\item \texttt{login\_shell} - pow³oka \texttt{/bin/bash},
+\item \texttt{mail} - adres e-mail,
+\item \texttt{shadow\_expire} - liczba dni do wyga¶niêcia konta wygenerowana w funkcji\linebreak{} \texttt{calculate\_account\_expiration()}.
+\end{myitemize}
+
+Funkcja \texttt{generate\_uid\_number()} s³u¿±ca do generowania numerów UID i~GID zdefiniowana jest w pliku \texttt{misc.py} (listing \ref{lst:generate-uid}). W~funkcji tej wykonywane jest zapytanie do katalogu LDAP w celu odnalezienia najwy¿szego numeru UID jakie w chwili obecnej znajduje siê w katalogu. Nastêpnie warto¶æ ta jest inkrementowana i~zwracana jako nowy numer UID. W~przypadku nieodnalezienia w katalogu ¿adnego wpisu z~numerem UID przyjmowana jest warto¶æ okre¶lona w pliku \texttt{settings.py} w zmiennej \texttt{INITIAL\_UID}.
+
+\begin{lstlisting}[language=Python,caption={Funkcja generuj±ca numer UID},label={lst:generate-uid}]
+def generate_uid_number():
+    try:
+        uid = LdapUser.objects.order_by('-uid_number')[0].uid_number + 1
+    except IndexError:
+        uid = INITIAL_UID
+    return uid
+\end{lstlisting}
+
+W~funkcji \texttt{activate()} tworzony jest równie¿ obiekt na podstawie modelu \texttt{LdapGroup} reprezentuj±cy grupê. 
+
+W~przypadku u¿ytkowników bez potwierdzonych kont mailowych, czyli tych znajduj±cych siê wewn±trz zmiennej \texttt{queryset\_without\_confirmation} za po¶rednictwem szablonu \texttt{activate\_confirmation.html} wy¶wietlana jest pro¶ba o~potwierdzenie aktywacji (rys. \ref{rys:potwierdzenie-aktywacji}). Je¶li aktywacja zostanie potwierdzona przez administratora wywo³ywana jest ta sama funkcja, lecz tym razem w¶ród parametrów POST znajduje siê ustawiona warto¶æ \texttt{apply\_update}, przez co wykonywana jest zawarto¶æ pierwszej klauzuli \texttt{if}, czyli aktywacja wszystkich pozosta³ych kont.
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=\textwidth]{potwierdzenie-aktywacji}
+\caption{Pro¶ba o~potwierdzenie aktywacji}
+\label{rys:potwierdzenie-aktywacji}
+\end{center}
+\end{figure}
+
+\subsection{Wysy³anie powiadomieñ mailowych}
+Aby mo¿liwe by³o wysy³anie powiadomieñ mailowych wykorzystany zosta³ wbudowany w Django mechanizm wysy³ania wiadomo¶ci email. W~celu skorzystania z~niego konieczne jest dokonanie jego konfiguracji.
+
+Konfiguracji dokonuje siê poprzez ustawienie zmiennych w pliku \texttt{settings.py}. Przyk³adowa konfiguracja dla wysy³anie powiadomieñ poprzez konto w serwisie Gmail widoczna jest na listingu \ref{lst:mail-konfiguracja}.
+
+\begin{lstlisting}[language=Python,caption={Konfiguracja powiadomieñ email},label={lst:mail-konfiguracja}]
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'student.icis.pcz.pl@gmail.com'
+EMAIL_HOST_PASSWORD = 'haslo'
+EMAIL_PORT = 587
+\end{lstlisting}
+
+Funkcje odpowiedzialne za wysy³anie powiadomieñ zdefiniowane s± w pliku \texttt{mail.py}. Podstawowymi funkcjami, wywo³ywanymi z~aplikacji s± funkcje \texttt{send\_confirmation\_mail()} oraz \texttt{send\_activation\_mail()}. W~funkcjach tych przygotowywana jest tre¶æ wiadomo¶ci w formacie HTML oraz w formie tekstu. Nastêpnie ka¿da z~tych funkcji wywo³uje funkcjê \texttt{send\_html\_mail()}, która z~kolei wywo³uje metodê klasy \texttt{EmailThread().start()}. Klasa \texttt{EmailThread} jest klas± dziedzicz±c± po \texttt{threading.Thread} i~tworz±c± nowy w±tek tak, aby dzia³anie portalu nie by³o przerywane na czas potrzebny na wys³anie wiadomo¶ci.
+
+\section{Zarz±dzanie repozytoriami}
+W~celu udostêpnienia repozytorium innemu u¿ytkownikowi nale¿y w swoim katalogu domowym utworzyæ podkatalog \texttt{git}, w którym mie¶ci³y siê bêd± udostêpniane repozytoria. Jako, ¿e zarz±dzania repozytoriami odbywa siê poprzez stronê internetow± u¿ytkownik systemowy \texttt{www-data} musi mieæ uprawnienia do odczytu danych z~tego katalogu. Najprostszym rozwi±zaniem tego problemu jest zmiana grupy do której nale¿y podkatalog \texttt{git} na grupê \texttt{www-data}. Ze wzglêdu na to, ¿e u¿ytkownik nie mo¿e dokonaæ tego samodzielnie, ze wzglêdu na to, ¿e nie posiada takich uprawnieñ utworzone zosta³y dwa skrypty. Pierwszym z~nich jest \texttt{/usr/bin/fixgitperm}, który poprzez narzêdzie \texttt{sudo} wywo³uje w³a¶ciwy skrypt zmieniaj±cy uprawnienia, czyli \texttt{/usr/bin/gitfix}. Tre¶æ tego skryptu przedstawiona zosta³a na listingu \ref{lst:gitfix}.
+
+\begin{lstlisting}[language=bash,caption={Skrypt \texttt{/usr/bin/gitfix}},label={lst:gitfix},numbers=none]
+chown $SUDO_USER:www-data /home/$SUDO_USER/git
+\end{lstlisting}
+
+W~skrypcie tym zosta³a u¿yta zmienna systemowa \texttt{SUDO\_USER}\cite{man:sudo} okre¶laj±ca u¿ytkownika, który wywo³a³ polecenie \texttt{sudo}.
+
+Poza stworzeniem tych dwóch skryptów zosta³a odpowiednio zmodyfikowana konfiguracja narzêdzia \texttt{sudo} w taki sposób, aby u¿ytkownik móg³ uruchomiæ za jego po¶rednictwem jedynie skrypt \texttt{/usr/bin/gitfix}. Konfiguracji narzêdzia \texttt{sudo} dokonuje siê za pomoc± narzêdzia \texttt{visudo}, które uruchamia domy¶lny edytor i~otwiera w nim plik konfiguracyjny \texttt{/etc/sudoers}. W~pliku tym dodana zasta³a linia przedstawiona na listingu \ref{lst:visudo}.
+
+\begin{lstlisting}[language={},caption={Konfiguracja \texttt{sudo}},label={lst:visudo},numbers=none]
+ALL     ALL=(ALL) NOPASSWD: /usr/bin/gitfix
+\end{lstlisting}
+
+Kolejne pola pliku \texttt{/etc/sudoers} okre¶laj±:
+\begin{myitemize}
+\item Nazwê u¿ytkownika, który mo¿e korzystaæ z~\texttt{sudo}. W~tym przypadku s± to wszyscy u¿ytkownicy.
+\item Nazwê komputera na którym regu³a bêdzie dzia³a³a.
+\item Nazwê u¿ytkowników z~uprawnieniami jakich u¿ytkownik uruchamiaj±cy \texttt{sudo} mo¿e wykonaæ polecenie.
+\item Polecenie jakie mo¿e zostaæ wykonane. W~tym przypadku jest to \texttt{/usr/bin/gitfix}, które mo¿e zostaæ wykonane bez podawania has³a.
+\end{myitemize}
+
+Po wprowadzeniu takiej konfiguracji u¿ytkownik, który chce udostêpniaæ repozytoria musi wykonaæ poni¿sze polecenia:
+\begin{verbatim}
+cd ~
+mkdir git
+fixgitperm
+cd git
+git --bare init NAZWA_REPOZYTORIUM
+\end{verbatim}
+
+Polecenia te s± prezentowane u¿ytkownikowi po przej¶ciu przez niego na podstronê udostêpniania repozytoriów je¶li serwer www nie ma mo¿liwo¶ci odczytania listy stworzonych repozytoriów.
+
+\subsection{Lista repozytoriów}
+Po zalogowaniu siê u¿ytkownika ma on dostêp do listy uprawnieñ do repozytoriów (rys. \ref{rys:lista-uprawnien}). Lista ta jest generowana w widoku \texttt{git\_repos()}. Pierwszym krokiem jest stworzenie klasy \texttt{RepoEntry}, a~nastêpnie za pomoc± metody klasy \eng{class method} \texttt{Repos.objects.all()} pobranie wszystkich repozytoriów jakie dany u¿ytkownik udostêpnia. Repozytoria te dodawane s± do listy \texttt{repos}, która w funkcji \texttt{render\_to\_response()} przekazywana jest do szablonu.
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics{lista-uprawnien}
+\caption{Lista uprawnieñ}
+\label{rys:lista-uprawnien}
+\end{center}
+\end{figure}
+
+\subsection{Nadawanie uprawnieñ}
+Za dodawanie uprawnieñ do repozytoriów odpowiedzialny jest widok \texttt{git\_repo\_add()}. W~pierwszej linii tej funkcji wywo³ywana jest funkcja \texttt{list\_user\_repos()}, która przeszukuje katalog \texttt{~/git/} i~pobiera nazwy podkatalogów (czyli repozytoriów) jakie s± w nim stworzone. Lista ta zapisywana jest w zmiennej \texttt{repos}. Je¶li lista ta jest pusta u¿ytkownikowi wy¶wietlana jest instrukcja utworzenia repozytorium.
+
+W~sytuacji, w której na li¶cie znajduj± siê repozytoria, prezentowany jest oparty na klasie \texttt{RepoForm} formularz dodawania uprawnieñ (rys. \ref{rys:dodawanie-uprawnien}). W~klasie tej zdefiniowane s± trzy pola: pole tekstowe na nazwê u¿ytkownika, któremu udostêpniamy repozytorium oraz dwa pola wyboru zawieraj±ce listê dostêpnych repozytoriów i~uprawnieñ. Lista repozytoriów przekazywana jest do konstruktora klasy \ref{lst:konstruktor-repoform}.
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics{dodawanie-uprawnien}
+\caption{Formularz dodawania uprawnieñ}
+\label{rys:dodawanie-uprawnien}
+\end{center}
+\end{figure}
+
+\begin{lstlisting}[language=Python,caption={Konstruktor klasy \texttt{RepoForm}},label={lst:konstruktor-repoform}]
+def __init__(self, *args, **kwargs):
+    repos = kwargs.pop('repos', tuple(""))
+    super(RepoForm, self).__init__(*args, **kwargs)
+    self.fields['reponame'].choices = repos
+\end{lstlisting}
+
+W~drugiej linii kodu z~listy nazwanych argumentów pobierany jest argument \texttt{repos}. Funkcja \texttt{pop} wywo³ywana na s³owniku \texttt{kwargs} usuwa jednocze¶nie pobrany argument z~tego s³ownika. Dziêki temu mo¿liwe jest przekazanie go do konstruktora klasy nadrzêdnej wzglêdem \texttt{RepoForm} (linia 3). W~linii czwartej nastêpuje inicjalizacja listy wyboru dla pola \texttt{reponame}.
+
+Po przes³aniu takiego formularza do aplikacji w tym samym widoku pobierane s± obiekty \texttt{LdapUser} osoby udostêpniaj±cej repozytorium (\texttt{user}) oraz osoby dla której takie repozytorium jest udostêpniane (\texttt{guest}). Nastêpnie do pola zawieraj±cego listê kluczy u¿ytkownika \texttt{user} dodawany jest klucz publiczny u¿ytkownika \texttt{guest} odnaleziony przez funkcjê \texttt{find\_primary\_key} wraz z~opcj± \texttt{command} (zobacz rozdzia³ \ref{sec:git}).
+
+Dla u¿ytkownika \texttt{user} tworzona jest tak¿e klasa \texttt{Git} (przez wywo³anie funkcji \texttt{git\_entry()} zdefiniowanej w pliku \texttt{models.py} (zobacz rozdzia³ \ref{sec:model})), a~nastêpnie obiekt tej klasy, który zapisywany jest do katalogu LDAP. Kiedy jednostka organizacyjna jest utworzona w podobny sposób tworzony jest wpis dla repozytorium z~odpowiednim atrybutem LDAP \texttt{userRO} lub \texttt{userRW}.
+
+\subsection{Usuwanie uprawnieñ}
+Usuwanie uprawnieñ do repozytoriów odbywa siê w widoku \texttt{delete()}. Do widoku oprócz obiektu \texttt{request} przekazywana jest nazwa repozytorium, nazwa u¿ytkownika \texttt{guest} oraz uprawnienie jakie ma byæ usuniête.
+
+Kod odpowiedzialny za usuwanie wpisu z~katalogu LDAP przedstawiony jest na listingu \ref{lst:widok-delete}.
+\begin{lstlisting}[language=Python,caption={Fragment widoku \texttt{delete()} odpowiedzialny za usuwanie repozytoriów},label={lst:widok-delete}]
+try:
+    if permissions == 'ro':
+        entry = Repos.objects.get(repo=reponame, userRO__contains=username)
+        entry.userRO.remove(username)
+        entry.save()
+    elif permissions == 'rw':
+        entry = Repos.objects.get(repo=reponame, userRW__contains=username)
+        entry.userRW.remove(username)
+        entry.save()
+except ObjectDoesNotExist:
+    return HttpResponse("Brak obiektu do usuniêcia.")
+\end{lstlisting}
+
+W~zale¿no¶ci od tego czy uprawnienie, które ma byæ usuniête to \texttt{ro} czy \texttt{rw} pobierany jest odpowiedni obiekt z~katalogu za pomoc± metody \texttt{Repos.objects.get()}. Do metody tej przekazane s± dwa nazwane argumenty: \texttt{repo} oraz \texttt{userRO\_\_contains}. Argumenty te stanowi± warunki wyszukania obiektów w katalogu. Zwrócony obiekt musi mieæ argument \texttt{repo} równy \texttt{reponame} oraz w argumencie \texttt{userRO} musi zawieraæ nazwê u¿ytkownika \texttt{username}\cite{django:contains}.
+
+\chapter{Podsumowanie}
+Wykorzystanie centralnej bazy u¿ytkowników znacznie upraszcza zarz±dzanie danymi u¿ytkowników. W~¶rodowiskach Linuksowych LDAP jest jednym z~najpopularniejszych sposobów centralizacji tych danych. 
+Ze wzglêdu na to, ¿e istnieje du¿a ilo¶æ oprogramowania, która posiada obs³ugê katalogów LDAP mo¿liwe jest wdro¿enie us³ugi katalogowej niewielkim nak³adem kosztów. Je¶li natomiast dana aplikacja nie posiada mo¿liwo¶ci integracji z serwerem LDAP to dziêki prostemu API oraz istniej±cym bibliotekom dla wielu jêzyków programowania bardzo proste jest stworzenie odpowiedniego modu³u dostarczaj±cego tak± funkcjê.
+
+Dziêki elastyczno¶ci i brakowi narzuconej struktury katalogu mo¿e on zostaæ dostosowany do przechowywania ró¿nego typu danych w sposób najlepiej odwzorowuj±cy strukturê przechowywanych danych, czyli na przyk³ad strukturê firmy.
+
+W stworzonym systemie katalog LDAP przechowuje zarówno dane u¿ytkowników, jak i informacje o repozytoriach GIT oraz uprawnieniach u¿ytkowników do tych repozytoriów. Wraz z rozwojem potrzeb u¿ytkowników systemu mo¿e on zostaæ rozszerzony przed dodanie kolejnych elementów takich jak na przyk³ad system zarz±dzania projektami. Redmine oraz Trac, które s± jednymi z najpopularniejszych systemów tego typu dostêpnych na wolnej licencji posiadaj± wsparcie dla autoryzacji na podstawie danych z katalogu LDAP.
+
+Wraz z rosn±c± ilo¶ci± danych jakie katalog przechowuje konieczne staje siê tak¿e zapewnienie odpowiedniego bezpieczeñstwa tych danych, czyli zapewnienia ochrony przed dostêpem osób niepowo³anych jak i równie¿ przed ich utrat±.
+
+Dziêki mechanizmowi ACL \eng{Access Control List} wbudowanemu w serwer OpenLDAP mo¿liwe jest stworzenie zaawansowanych list dostêpu do danych wewn±trz katalogu. Listy takie mog± kontrolowaæ dostêp u¿ytkowników do poszczególnych ga³êzi drzewa LDAP, a tak¿e pojedynczych wpisów czy atrybutów. Poprzez odpowiedni± konfiguracjê list ACL mo¿liwe jest tak¿e wydzielenie grup u¿ytkowników o podwy¿szonych uprawnieniach dostêpu do danych, czyli osób, które bêd± mog³y administrowaæ pewnymi fragmentami katalogu.
+
+W celu zabezpieczania przed utrat± danych konieczne jest oczywi¶cie wykonywanie okresowych kopii katalogu z wykorzystaniem narzêdzia \texttt{slapcat}. Serwer OpenLDAP udostêpnia tak¿e mo¿liwo¶æ replikacji danych w czasie rzeczywistym do serwera podrzêdnego poprzez mechanizm \texttt{syncrepl}. Rozwi±zanie takie mo¿e byæ szczególnie przydane w razie awarii sprzêtowej.
+
+
+\printbibliography 
+\addcontentsline{toc}{chapter}{Literatura}
+
+\chapter*{Zawarto¶æ p³yty}
+\addcontentsline{toc}{chapter}{Zawarto¶æ p³yty}
+Do pracy za³±czona zosta³a p³yta CD-ROM, która zawiera:
+\begin{myitemize}
+\item pracê magistersk± w formacie PDF (w katalogu \verb|praca|)
+\item kod ¼ród³owy wykonanego programu (w katalogu \verb|program|)
+\item tekstow± wersjê pracy w formacie~\LaTeX~(w katalogu \verb|praca/latex|)
+\end{myitemize}
+
+\end{document}
