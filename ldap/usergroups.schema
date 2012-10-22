@@ -1,0 +1,23 @@
+attributetype ( 1.2.3.4.5.6.7 
+	NAME ( 'group' 'groupName' ) 
+	DESC 'Custom group name' 
+	SUP ou 
+	SINGLE-VALUE 
+ )
+
+attributetype ( 1.2.3.4.5.6.8 
+	NAME 'ownerUid' 
+	DESC 'User group owner' 
+	SUP memberUid 
+	SINGLE-VALUE 
+ )
+
+objectclass ( 1.2.3.4 
+	NAME 'usergroups' 
+	DESC 'Custom user groups for student server' 
+	SUP top 
+	STRUCTURAL 
+	MUST ( group $ ownerUid ) 
+	MAY memberUid 
+ )
+

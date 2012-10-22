@@ -1,0 +1,28 @@
+attributetype ( 1.3.6.1.4.1.123456789.2.3.1
+	NAME ( 'repo' 'repositoryName' )
+	DESC 'git repository name'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256}
+	SINGLE-VALUE )
+
+attributetype ( 1.3.6.1.4.1.123456789.2.3.2
+        NAME 'userRW'
+	DESC 'user with RW rights'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )
+
+attributetype ( 1.3.6.1.4.1.123456789.2.3.3
+        NAME 'userRO'
+	DESC 'user with RO rights'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256} )
+
+objectclass ( 1.3.6.1.4.1.123456789.2.4.1
+	NAME 'repository'
+	DESC 'permissions for git repository'
+	SUP top STRUCTURAL
+	MUST repositoryName
+	MAY ( userRW $ userRO ) )
