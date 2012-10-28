@@ -4,11 +4,11 @@ import random
 from student.settings import INITIAL_UID
 
 def generate_confirmation_link():
-	"""Function for generating random string that is used in urls for confirmation link"""
+    """Function for generating random string that is used in urls for confirmation link"""
     return random.getrandbits(128)
 
 def strip_polish_letters(string):
-	"""Stripping polish letters in usernames"""
+    """Stripping polish letters in usernames"""
     import re
     r = {u"ę":'e',u"ó":'o',u"ą":'a',u"ś":'s',u"ł":'l',u"ż":'z',u"ź":'z',u"ć":'c',u"ń":'n', 
          u"Ę":'E',u"Ó":'O',u"Ą":'A',u"Ś":'S',u"Ł":'l',u"Ż":'Z',u"Ź":'Z',u"Ć":'C',u"Ń":'N'}
@@ -21,19 +21,19 @@ def strip_polish_letters(string):
     return string
 
 def generate_uid_number():
-	"""Generating UID numers
+    """Generating UID numers
 
     We're checking for maximum UID numer in LDAP database and incrementing it
     """
     try:
         uid = LdapUser.objects.order_by('-uid_number')[0].uid_number + 1
     except IndexError:
-		# If there is no users in LDAP we're using INITIAL_UID constant defined in settings.py
+        # If there is no users in LDAP we're using INITIAL_UID constant defined in settings.py
         uid = INITIAL_UID
     return uid
 
 def get_salt():
-	"""Preparing salt for SSHA password"""
+    """Preparing salt for SSHA password"""
     import string
     
     salt = ""
@@ -42,9 +42,9 @@ def get_salt():
     return salt
 
 def hash_password(password):
-	"""Hashing password befere writing them
+    """Hashing password befere writing them
 
-	Password are hashed as in LDAP DB and stored as it in SQLITE DB before moving user to LDAP DB
+    Password are hashed as in LDAP DB and stored as it in SQLITE DB before moving user to LDAP DB
     """
     import base64
     import sha
@@ -53,7 +53,7 @@ def hash_password(password):
     return "{SSHA}" + base64.encodestring(sha.new(str(password) + salt).digest() + salt)[:-1]
     
 def user_exist(username):
-	"""Checking if there is user or temp user with username"""
+    """Checking if there is user or temp user with username"""
     from models import TemporaryUser
     from django.core.exceptions import ObjectDoesNotExist
     
@@ -75,7 +75,7 @@ def user_exist(username):
     return False
 
 def email_exist(email):
-	"""Checking if there is user or temp user with email addres"""
+    """Checking if there is user or temp user with email addres"""
     from models import TemporaryUser
     from django.core.exceptions import ObjectDoesNotExist
     
@@ -97,9 +97,9 @@ def email_exist(email):
     return False
 
 def calculate_account_expiration(year):
-	"""Calculating accounte expiration
+    """Calculating accounte expiration
 
-	Basing on study year from registration form we're creating timestamp in form of number of days from using date to October 1st of year of finishing studies.
+    Basing on study year from registration form we're creating timestamp in form of number of days from using date to October 1st of year of finishing studies.
     """
     import datetime
     today = datetime.date.today()  
@@ -111,18 +111,18 @@ def calculate_account_expiration(year):
     return expiration.days
 
 def expiration_days_to_date(days):
-	"""Function that is used in WidgetExpire"""
+    """Function that is used in WidgetExpire"""
     import datetime
     return datetime.date(1970, 1, 1) + datetime.timedelta(days)
 
 def date_to_expiration_days(date):
-	"""Function that is used in WidgetExpire"""
+    """Function that is used in WidgetExpire"""
     import datetime
     expiration = datetime.datetime.strptime(date, '%d.%m.%Y') - datetime.datetime(1970, 1, 1, 0, 0, 0)
     return expiration.days
 
 def find_primary_key(user):
-	"""Finding primary public key for specified user"""
+    """Finding primary public key for specified user"""
     keys = user.ssh_public_key
     for key in keys:
         if key.startswith(('ssh-dss','ssh-rsa',)):
@@ -130,7 +130,7 @@ def find_primary_key(user):
     return None
 
 def list_user_repos(username):
-	"""Function that list subdirectories in ~/git/ as user repos"""
+    """Function that list subdirectories in ~/git/ as user repos"""
     import os
     user = LdapUser.objects.get(uid=username)
     home_dir =  user.home_directory + "/git/"

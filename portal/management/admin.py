@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from models import LdapGroup, LdapUser, TemporaryUser
+from models import LdapGroup, LdapUserGroup, LdapUser, TemporaryUser
 from misc import generate_uid_number, calculate_account_expiration
 from django.shortcuts import render_to_response
 from django import template, forms
@@ -11,26 +11,26 @@ from django.contrib.admin.widgets import AdminDateWidget
 from misc import expiration_days_to_date
 
 class TemporaryUserAdmin(admin.ModelAdmin):
-	""" Class for displaying TemporaryUser in admin panel"""
+    """ Class for displaying TemporaryUser in admin panel"""
     list_display = ('username', 'name_and_surname')
     actions = ['activate']
     
     def name_and_surname(self, obj):
-		"""Return name and surname"""
+        """Return name and surname"""
         return obj.name + ' ' + obj.surname
     
     name_and_surname.short_description = 'Imię i nazwisko'
     
     def activate(self, request, queryset):
-		"""Create account for TemporaryUser in LDAP database and remove from SQLite database
+        """Create account for TemporaryUser in LDAP database and remove from SQLite database
 
-		Arguments:
-		request - HTTPRequest object
-		queryset - queryset containing list of users that was marked on list
+        Arguments:
+        request - HTTPRequest object
+        queryset - queryset containing list of users that was marked on list
         
         """
         if 'apply_update' in request.POST:
-			# apply_update is in request.POST when there was confirmation in question about activating users without confirmed email address
+            # apply_update is in request.POST when there was confirmation in question about activating users without confirmed email address
             modified_count = 0
             for obj in queryset:
                 newUid = generate_uid_number()
@@ -119,7 +119,7 @@ class TemporaryUserAdmin(admin.ModelAdmin):
         else:
             self.message_user(request, "Aktywowano %s użytkowników tymczasowych." % modified_count)
 
-		# If there is at least one user without confirmed email we're creating form with list of that users
+        # If there is at least one user without confirmed email we're creating form with list of that users
         if queryset_without_confirmation.count():    
             opts = self.model._meta
             app_label = opts.app_label
@@ -134,19 +134,19 @@ class TemporaryUserAdmin(admin.ModelAdmin):
 
             return render_to_response("activate_confirmation.html", context, context_instance=template.RequestContext(request))
 
-	# Name of option in the action list
+    # Name of option in the action list
     activate.short_description = u'Aktywuj wybranych użykowników tymczasowych'
 
 class LdapUserAdminForm(forms.ModelForm):
-	"""Form for displaying LdapUser in admin panel"""
+    """Form for displaying LdapUser in admin panel"""
     class Meta:
-		# We're changing widget of field shadow_expire to our ExpireWidget that handle displaying days from unix date in calendar form
+        # We're changing widget of field shadow_expire to our ExpireWidget that handle displaying days from unix date in calendar form
         widgets = {
             'shadow_expire': ExpireWidget
             }
 
 class LdapUserAdmin(admin.ModelAdmin):
-	"""Class for displaying LdapUser in admin panel"""
+    """Class for displaying LdapUser in admin panel"""
     actions = ['delete_with_groups']
     
     exclude = ('ssh_public_key',)
@@ -154,7 +154,7 @@ class LdapUserAdmin(admin.ModelAdmin):
     form = LdapUserAdminForm
     
     def delete_with_groups(self, request, queryset):
-		"""Deleting user and users group from LDAP"""
+        """Deleting user and users group from LDAP"""
         for obj in queryset:
             LdapGroup.objects.filter(gid_number=obj.uid_number).delete()
             obj.delete()
@@ -162,5 +162,6 @@ class LdapUserAdmin(admin.ModelAdmin):
     delete_with_groups.short_description = u'Usuń wybranych użytkowników LDAP wraz z ich grupami'
 
 admin.site.register(LdapGroup)
+#admin.site.register(LdapUserGroup)
 admin.site.register(LdapUser, LdapUserAdmin)
 admin.site.register(TemporaryUser, TemporaryUserAdmin)

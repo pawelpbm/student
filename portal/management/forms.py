@@ -4,14 +4,14 @@ from misc import strip_polish_letters, hash_password, user_exist, email_exist
 import struct, base64
 
 class AccountForm(forms.Form):
-	"""Form that is used in modify account view"""
+    """Form that is used in modify account view"""
     email = forms.EmailField(label='Adres email')
     ssh_public_key = forms.CharField(widget=forms.Textarea(attrs={'rows':'4'}), label='Klucz publiczny')
 
     def clean_ssh_public_key(self):
-		"""Checking of public key
+        """Checking of public key
 
-		Function checks if there are three fields in public key: key_type, data and commment. After that we check if key_type is the same key_type that is encoded in data section.
+        Function checks if there are three fields in public key: key_type, data and commment. After that we check if key_type is the same key_type that is encoded in data section.
         
         """
         ssh_public_key = self.cleaned_data.get('ssh_public_key')
@@ -33,7 +33,7 @@ class LogInForm(forms.Form):
     password = forms.CharField(max_length=200, widget=forms.PasswordInput, label='Hasło')
     
 class RegistrationForm(forms.Form):
-	"""User registration form"""
+    """User registration form"""
     years = ((1,1), (2, 2), (3,3), (4,4), (5,5),)
    
     username = forms.CharField(max_length=200, required=False, help_text=u'Jeśli nie podasz loginu zostanie on automatycznie wygenerowany. Będzie to pierwsza litera imienia i nazwisko.')
@@ -47,7 +47,7 @@ class RegistrationForm(forms.Form):
     rules = forms.BooleanField(label="Oświadczam, że:")
     
     def clean_repeat_password(self):
-		"""Checking if password and repeat_password are identical"""
+        """Checking if password and repeat_password are identical"""
         password = self.cleaned_data.get('password')
         repeat_password = self.cleaned_data.get('repeat_password')
         
@@ -58,7 +58,7 @@ class RegistrationForm(forms.Form):
         return hash_password(repeat_password)
     
     def clean_email(self):
-		"""Checking if there is no user with the same email address"""
+        """Checking if there is no user with the same email address"""
         email = self.cleaned_data.get('email')
         
         if email_exist(email):
@@ -89,9 +89,9 @@ class RegistrationForm(forms.Form):
         return strip_polish_letters(username)
                 
     def clean_ssh_public_key(self):
-		"""Checking of public key
+        """Checking of public key
 
-		Function checks if there are three fields in public key: key_type, data and commment. After that we check if key_type is the same key_type that is encoded in data section.
+        Function checks if there are three fields in public key: key_type, data and commment. After that we check if key_type is the same key_type that is encoded in data section.
         
         """
         ssh_public_key = self.cleaned_data.get('ssh_public_key')
@@ -108,7 +108,7 @@ class RegistrationForm(forms.Form):
         return ssh_public_key
     
 class RepoForm(forms.Form):
-	"""Form for adding GIT permmissions"""
+    """Form for adding GIT permmissions"""
     perms = (('---', '---'), ('rw','zapis'), ('ro', 'odczyt'),)
     username = forms.CharField(max_length=200, label='Nazwa użytkownika')
     reponame  = forms.ChoiceField(choices='', label='Repozytorium')
@@ -116,16 +116,16 @@ class RepoForm(forms.Form):
     
     
     def __init__(self, *args, **kwargs):
-		"""Initializing list of user repositories in dropdown box
+        """Initializing list of user repositories in dropdown box
 
-		List of users repos is argument to constructor of RepoForm class (named parameter repos). We are removing it from list of named parameters, calling parent class constructor and initializing list.
+        List of users repos is argument to constructor of RepoForm class (named parameter repos). We are removing it from list of named parameters, calling parent class constructor and initializing list.
         """
         repos = kwargs.pop('repos', tuple(""))
         super(RepoForm, self).__init__(*args, **kwargs)
         self.fields['reponame'].choices = repos
 
     def clean_permissions(self):
-		"""Checking if user choosed permission from dropdown list"""
+        """Checking if user choosed permission from dropdown list"""
         permission = self.cleaned_data.get('permissions')
         
         if permission == '---':

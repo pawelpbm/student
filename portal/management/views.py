@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+import ldap
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
-from models import TemporaryUser, LdapUser
+from models import TemporaryUser, LdapUser, LdapUserGroup
 from django.shortcuts import render_to_response, redirect
 from forms import LogInForm, RegistrationForm, RepoForm, AccountForm
 from django.template import RequestContext
@@ -13,11 +14,11 @@ from misc import generate_confirmation_link
 from student.management.misc import list_user_repos
 from models import git_entry, repo_entry
 import os.path
-import ldap
+
 from django.core.urlresolvers import reverse
 
 def home(request):
-	"""View for displaying main page with login form"""
+    """View for displaying main page with login form"""
     if request.method == 'POST':
         form = LogInForm(request.POST)
         if form.is_valid():
@@ -40,13 +41,13 @@ def home(request):
     return render_to_response('invitation.html',  {'form': form,}, context_instance=RequestContext(request))
 
 def logout_view(request):
-	"""View for loggin out users"""
+    """View for loggin out users"""
     logout(request)
     return HttpResponseRedirect('/')
 
 @login_required
 def account(request):
-	"""View for displaying and modyfing acount information"""
+    """View for displaying and modyfing acount information"""
     if request.method == 'POST':
         form = AccountForm(request.POST)
         if form.is_valid():
@@ -82,7 +83,7 @@ def account(request):
 
 @login_required
 def delete(request, reponame, username, permissions):
-	"""View for removing permission for repositories"""
+    """View for removing permission for repositories"""
     ownername = request.user.ldap_user._username
     Repos = repo_entry(ownername)
     try:
@@ -101,8 +102,19 @@ def delete(request, reponame, username, permissions):
     
 
 @login_required
+def usergroups(request, usergroup_modification=None, err=None):
+    """View displaying list of repositories"""
+    username = request.user.ldap_user._username
+    groupsOwner = LdapUserGroup.objects.filter(owner=username)
+    groupsMember = []
+    for ug in LdapUserGroup.objects.all():
+        if username in ug.members:
+            groupsMember.append(ug)
+    return render_to_response('groups.html',  {'err': err, 'groupsOwner': groupsOwner, 'groupsMember': groupsMember, 'usergroup_modification': usergroup_modification}, context_instance=RequestContext(request))
+
+@login_required
 def git_repos(request, repository_modification=None, err=None):
-	"""View displaying list of repositories"""
+    """View displaying list of repositories"""
     username = request.user.ldap_user._username
     Repos = repo_entry(username)
     repos = []
@@ -113,7 +125,7 @@ def git_repos(request, repository_modification=None, err=None):
 
 @login_required
 def git_repo_add(request):
-	"""View for adding repository permissions"""
+    """View for adding repository permissions"""
     repos = list_user_repos(request.user.username)
     if request.method == 'POST':
         form = RepoForm(request.POST, repos=repos)
@@ -171,7 +183,7 @@ def git_repo_add(request):
     
 
 def confirm(request, activation_key):
-	"""View for confirming email address"""
+    """View for confirming email address"""
     form = LogInForm()
     try:
         user = TemporaryUser.objects.get(confirmation_link=activation_key)
@@ -184,7 +196,7 @@ def confirm(request, activation_key):
         return render_to_response('invitation.html',  {'confirmed': 3, 'form': form}, context_instance=RequestContext(request))
 
 def registration(request):
-	"""Registration view"""
+    """Registration view"""
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():

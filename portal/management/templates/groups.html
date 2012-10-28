@@ -1,0 +1,75 @@
+{% extends "main.html" %}
+
+{% block left %}
+
+{% if err %}
+<div class="alert alert-error alert-block">
+  <a class="close" data-dismiss="alert">Ă—</a>
+  <h4 class="alert-heading">Uwaga!</h4>
+  Takie uprawnienia są już dodane.
+</div>
+{% endif %}
+
+{% if usergroup_modification %}
+    <div class="alert alert-success">
+    <a class="close" data-dismiss="alert">Ă—</a>
+    <h4 class="alert-heading">{% if usergroup_modification.modification == "add" %}Uprawnienia dodane!{% else %} {% if usergroup_modification.modification == "del"%}Uprawnienia usunięte!{% endif %}{% endif%}</h4>
+    {% if usergroup_modification.modification == "add" %}Dodano{% else %} {% if usergroup_modification.modification == "del"%}Usunięto{% endif %}{% endif%} uprawnienie <strong>{{ usergroup_modification.permission }}</strong> do repozytorium <strong>{{ usergroup_modification.reponame }}</strong> dla użytkownika <strong>{{ usergroup_modification.username}}</strong>.
+    </div>
+{% endif %}
+
+
+<h2>Grupy, których jesteś właścicielem:</h2>
+<a class="btn" href="/account/groups/add">Dodaj nową grupę</a><br><br>
+{% if groupsOwner %}
+{% for group in groupsOwner %}
+
+<h3>Grupa: {{group.name}}</h3>
+
+	<table class="git-table table" class="tablesorter">
+	<thead>
+		<tr>
+			<th>#</th>
+			<th>Użytkownik</th>
+			<th>Wypisz</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for groupMember in group.members %}
+		<tr><td>{{forloop.counter}}</td><td>{{ groupMember }}</td><td><a href="/account/groups/del/{{group.name}}/{{groupMember}}/del">Usuń</a></td></tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% endfor %}
+{% endif %}
+{% if groupsMember %}
+	<h2>Grupy, których jesteś członkiem:</h2>
+	<table class="git-table table" class="tablesorter">
+	<thead>
+		<tr>
+			<th>#</th>
+			<th>Nazwa</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for group in groupsMember %}
+		<tr><td>{{forloop.counter}}</td><td>{{ group.name }}</td></tr>
+	{% endfor %}
+	</tbody>
+	</table>
+{% endif %}
+{% endblock %}
+
+{% block script %}
+<script>
+$(".alert").alert()
+$(document).ready(function() 
+{ 
+$(".git-table").tablesorter( {sortList: [[0,0]], headers: { 
+3: { 
+sorter: false 
+}}});}); 
+</script>
+
+{% endblock %}

@@ -17,11 +17,11 @@ class EmailThread(threading.Thread):
        
 
 def send_html_mail(subject, html_content, text_content, recipient_list):
-	"""Function for creating and starting new thread for sending emails"""
+    """Function for creating and starting new thread for sending emails"""
     EmailThread(subject, html_content, text_content, recipient_list).start()
 
 def send_confirmation_mail(user):
-	"""Prepare strings for confirmation email"""
+    """Prepare strings for confirmation email"""
     text_content = u'''Witaj, %s
     
     Aby potwierdzić swoją rejestrację na serwerze student.icis.pcz.pl odwiedź poniższą stronę:
@@ -30,11 +30,11 @@ def send_confirmation_mail(user):
     ''' % (user.name, user.confirmation_link)
     html_content = u'''Witaj, %s<br /><br /> Aby potwierdzić swoją rejestrację na serwerze student.icis.pcz.pl odwiedź poniższą stronę <a href="http://student.icis.pcz.pl/confirm/%s">http://student.icis.pcz.pl/confirm/%s</a>
     '''% (user.name, user.confirmation_link, user.confirmation_link)
-	# We're calling function send_html_email with  prepared strings as arguments
+    # We're calling function send_html_email with  prepared strings as arguments
     send_html_mail("student.icis.pcz.pl - potwierdzenie adresu email", html_content, text_content, [user.email])
     
 def send_activation_mail(user):
-	"""Prepare strings for activation email"""
+    """Prepare strings for activation email"""
     text_content = u'''Witaj, %s
     
     Twoje konto na serwerze student.icis.pcz.pl zostało aktywowane.
@@ -43,5 +43,5 @@ def send_activation_mail(user):
     
     html_content = u'''Witaj, %s<br /><br /> Twoje konto na serwerze student.icis.pcz.pl zostało aktywowane.
     '''% user.name
-	# We're calling function send_html_email with  prepared strings as arguments
+    # We're calling function send_html_email with  prepared strings as arguments
     send_html_mail("student.icis.pcz.pl - aktywacja konta", html_content, text_content, [user.email])

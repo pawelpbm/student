@@ -7,8 +7,10 @@ import ldapdb.models
 from student.settings import LDAP_SUFFIX 
     
 class TemporaryUser(models.Model):
-    """Class for TemporaryUser stored in SQLite."""
-
+    """
+    Klasa reprezentująca użytkownika tymczasowego, przechowywana w bazie lokalnej (sqlite). Na jej podstawie (po aktywacji w panelu administratora) tworzony jest użytkownik w LDAP.    
+    """
+    
     class Meta:
         verbose_name = "Użytkownik tymczasowy"
         verbose_name_plural = "Użytkownicy tymczasowi"
@@ -30,10 +32,6 @@ class TemporaryUser(models.Model):
         return self.username
 
 def repo_entry(username):
-	"""Function that returns class RepoEntry_username for specified username
-
-	Class is generated dynamically, because of variable base_dn that must be properly set befeore __init__() in case of calling class methods.
-    """
     object_classes = ['top', 'repository']
     
     base_dn = "ou=git,uid=" + username + ",ou=users," + LDAP_SUFFIX
@@ -62,11 +60,8 @@ def repo_entry(username):
     return type('RepoEntry_' + username.encode('ascii','ignore'), (ldapdb.models.Model,), attrs)
 
 
-def git_entry(username): 
-	"""Function that returns class GitEntry_username for specified username
 
-	Class is generated dynamically, because of variable base_dn that must be properly set befeore __init__() in case of calling class methods.
-    """
+def git_entry(username): 
     base_dn = "uid=" + username +",ou=users,"+ LDAP_SUFFIX
     object_classes = ['top', 'organizationalUnit']
     
@@ -89,12 +84,15 @@ def git_entry(username):
     
     return type('GitEntry_' + username.encode('ascii','ignore'), (ldapdb.models.Model,), attrs)
 
+
 class LdapUser(ldapdb.models.Model):
-    """Class for storing user in LDAP DB"""
+    """
+    Klasa reprezentująca użytkownika w bazie LDAP (i systemie)
+    """
     
     class Meta:
-        verbose_name = "Użytkownik LDAP"
-        verbose_name_plural = "Użytkownicy LDAP"
+        verbose_name = "Użytkownik systemowy LDAP"
+        verbose_name_plural = "Użytkownicy systemowi LDAP"
     
     base_dn = "ou=users," + LDAP_SUFFIX
     object_classes = ['top', 'posixAccount', 'person', 'organizationalPerson', 'inetOrgPerson', 'ldapPublicKey', 'shadowAccount']
@@ -118,11 +116,13 @@ class LdapUser(ldapdb.models.Model):
         return self.uid
         
 class LdapGroup(ldapdb.models.Model):
-    """Class for storing group in LDAP DB"""
+    """
+    Klasa reprezentująca grupę w bazie LDAP
+    """
     
     class Meta:
-        verbose_name = "Grupa LDAP"
-        verbose_name_plural = "Grupy LDAP"
+        verbose_name = "Grupa systemowa LDAP"
+        verbose_name_plural = "Grupy systemowe LDAP"
     
     base_dn = "ou=groups," + LDAP_SUFFIX
     object_classes = ['posixGroup', 'top']
@@ -135,3 +135,26 @@ class LdapGroup(ldapdb.models.Model):
 
     def __unicode__(self):
         return self.cn
+
+
+class LdapUserGroup(ldapdb.models.Model):
+    """
+    Klasa reprezentująca grupę stworzoną przez danego użytkownika w bazie LDAP
+    """
+    
+    class Meta:
+        verbose_name = "Grupa użytkownika LDAP"
+        verbose_name_plural = "Grupy użytkowników LDAP"
+    
+    base_dn = "ou=usergroups," + LDAP_SUFFIX
+    object_classes = ['usergroups', 'top']
+
+    name = LDAPCharField(db_column='group', max_length=100, primary_key=True, verbose_name='Nazwa grupy')
+    owner = LDAPCharField(db_column='ownerUid', max_length=20, verbose_name='Właściciel grupy')
+    members = LDAPListField(db_column='memberUid', verbose_name='Członkowie grupy')
+
+    def __str__(self):
+        return self.name
+
+    def __unicode__(self):
+        return self.name
