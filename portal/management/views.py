@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from models import TemporaryUser, LdapUser, LdapUserGroup
 from django.shortcuts import render_to_response, redirect
-from forms import LogInForm, RegistrationForm, RepoForm, AccountForm
+from forms import LogInForm, RegistrationForm, RepoForm, AccountForm, UserGroupForm
 from django.template import RequestContext
 from django.contrib.auth import authenticate, login, logout
 from django.core.exceptions import ObjectDoesNotExist
@@ -111,6 +111,30 @@ def usergroups(request, usergroup_modification=None, err=None):
         if username in ug.members:
             groupsMember.append(ug)
     return render_to_response('groups.html',  {'err': err, 'groupsOwner': groupsOwner, 'groupsMember': groupsMember, 'usergroup_modification': usergroup_modification}, context_instance=RequestContext(request))
+
+@login_required
+def usergroup_add(request):
+    """View for adding new user group"""
+
+    if request.method == 'POST':
+        form = UserGroupForm(request.POST)
+        if form.is_valid():    
+            username = request.user.username
+            groupname = form.cleaned_data['groupname']
+
+            group = LdapUserGroup(name=groupname, owner=username, members=[])
+            
+            try:
+                group.save()            
+            except ldap.ALREADY_EXISTS:
+                return usergroups(request, err={'err': 'usergroup_exist'})
+                
+            return usergroups(request, usergroup_modification={'groupname': groupname, 'modification': 'add'})
+    else:
+        form = UserGroupForm()
+
+    return render_to_response('group_add.html',  {'form': form,}, context_instance=RequestContext(request))
+    
 
 @login_required
 def git_repos(request, repository_modification=None, err=None):

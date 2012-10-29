@@ -132,3 +132,17 @@ class RepoForm(forms.Form):
             self._errors["permissions"] = self.error_class(["Musisz wybrać uprawnienia."])
             
         return permission
+    
+class UserGroupForm(forms.Form):
+    """Form for adding new user group"""
+    groupname = forms.CharField(max_length=200, label='Nazwa użytkownika')
+
+    def check_name(self):
+        """Checking if user choosed permission from dropdown list"""
+        permission = self.cleaned_data.get('permissions')
+        
+        if permission == '---':
+            self._errors["permissions"] = self.error_class(["Musisz wybrać uprawnienia."])
+            
+        return permission
+

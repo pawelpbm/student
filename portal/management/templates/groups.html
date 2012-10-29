@@ -4,17 +4,17 @@
 
 {% if err %}
 <div class="alert alert-error alert-block">
-  <a class="close" data-dismiss="alert">Ă—</a>
+  <a class="close" data-dismiss="alert">x</a>
   <h4 class="alert-heading">Uwaga!</h4>
-  Takie uprawnienia są już dodane.
+  Taka grupa już istnieje.
 </div>
 {% endif %}
 
 {% if usergroup_modification %}
     <div class="alert alert-success">
-    <a class="close" data-dismiss="alert">Ă—</a>
-    <h4 class="alert-heading">{% if usergroup_modification.modification == "add" %}Uprawnienia dodane!{% else %} {% if usergroup_modification.modification == "del"%}Uprawnienia usunięte!{% endif %}{% endif%}</h4>
-    {% if usergroup_modification.modification == "add" %}Dodano{% else %} {% if usergroup_modification.modification == "del"%}Usunięto{% endif %}{% endif%} uprawnienie <strong>{{ usergroup_modification.permission }}</strong> do repozytorium <strong>{{ usergroup_modification.reponame }}</strong> dla użytkownika <strong>{{ usergroup_modification.username}}</strong>.
+    <a class="close" data-dismiss="alert">x</a>
+    <h4 class="alert-heading">{% if usergroup_modification.modification == "add" %}Grupa dodana!{% else %} {% if usergroup_modification.modification == "del"%}Grupa usunięta!{% endif %}{% endif%}</h4>
+    {% if usergroup_modification.modification == "add" %}Dodano{% else %} {% if usergroup_modification.modification == "del"%}Usunięto{% endif %}{% endif%} grupę <strong>{{ usergroup_modification.groupname }}</strong>.
     </div>
 {% endif %}
 

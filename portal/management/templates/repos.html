@@ -5,7 +5,7 @@
 <a class="btn" href="/account/repositories/add">Dodaj uprawnienia do repozytorium</a><br><br>
 {% if err %}
 <div class="alert alert-error alert-block">
-  <a class="close" data-dismiss="alert">×</a>
+  <a class="close" data-dismiss="alert">x</a>
   <h4 class="alert-heading">Uwaga!</h4>
   Takie uprawnienia są już dodane.
 </div>
@@ -13,7 +13,7 @@
 
 {% if repository_modification %}
     <div class="alert alert-success">
-    <a class="close" data-dismiss="alert">×</a>
+    <a class="close" data-dismiss="alert">x</a>
     <h4 class="alert-heading">{% if repository_modification.modification == "add" %}Uprawnienia dodane!{% else %} {% if repository_modification.modification == "del"%}Uprawnienia usunięte!{% endif %}{% endif%}</h4>
     {% if repository_modification.modification == "add" %}Dodano{% else %} {% if repository_modification.modification == "del"%}Usunięto{% endif %}{% endif%} uprawnienie <strong>{{ repository_modification.permission }}</strong> do repozytorium <strong>{{ repository_modification.reponame }}</strong> dla użytkownika <strong>{{ repository_modification.username}}</strong>.
     </div>
