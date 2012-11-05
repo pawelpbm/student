@@ -6,7 +6,16 @@
 <div class="alert alert-error alert-block">
   <a class="close" data-dismiss="alert">x</a>
   <h4 class="alert-heading">Uwaga!</h4>
-  Taka grupa już istnieje.
+    {% if err.err == "usergroup_exist" %}
+	    Taka grupa już istnieje.
+	{% endif %}
+	{% if err.err == "usergroup_not_exist" %}
+	    Taka grupa nie istnieje.
+	{% endif %}
+	{% if err.err == "usergroup_member_not_exist" %}
+		Taki użytkownik nie istnieje w tej grupie
+	{% endif %}
+ 
 </div>
 {% endif %}
 
@@ -24,7 +33,7 @@
 {% if groupsOwner %}
 {% for group in groupsOwner %}
 
-<h3>Grupa: {{group.name}}</h3>
+<h3>Grupa: {{group.name}} <a class="btn" href="/account/groups/del/{{group.name}}">Usuń grupę</a></h3>
 
 	<table class="git-table table" class="tablesorter">
 	<thead>
@@ -36,7 +45,7 @@
 	</thead>
 	<tbody>
 	{% for groupMember in group.members %}
-		<tr><td>{{forloop.counter}}</td><td>{{ groupMember }}</td><td><a href="/account/groups/del/{{group.name}}/{{groupMember}}/del">Usuń</a></td></tr>
+		<tr><td>{{forloop.counter}}</td><td>{{ groupMember }}</td><td><a href="/account/groups/del/{{group.name}}/{{groupMember}}">Usuń</a></td></tr>
 	{% endfor %}
 	</tbody>
 	</table>

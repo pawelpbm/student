@@ -135,6 +135,39 @@ def usergroup_add(request):
 
     return render_to_response('group_add.html',  {'form': form,}, context_instance=RequestContext(request))
     
+@login_required
+def usergroup_delete(request, groupname):
+    """View for removing user groups"""
+    username = request.user.ldap_user._username
+    
+    try:
+        entry = LdapUserGroup.objects.get(name=groupname)
+        entry.delete()
+        #entry.save()
+    except ObjectDoesNotExist:
+        return HttpResponse("Brak grupy do usunięcia.")
+    
+    return usergroups(request, usergroup_modification={'groupname': groupname, 'modification': 'del'})
+    
+@login_required
+def usergroup_member_delete(request, groupname, username):
+    """View for removing user groups"""
+    #username = request.user.ldap_user._username
+    
+    try:
+        entry = LdapUserGroup.objects.get(name=groupname)
+        entry.members.remove(username)
+        entry.save()
+    except ObjectDoesNotExist :
+        #return HttpResponse("Brak grupy do usunięcia.")
+        return usergroups(request, err={'err': 'usergroup_not_exist'})
+    except ValueError :
+        #return HttpResponse("Nie ma takiego użytkownika")
+        return usergroups(request, err={'err': 'usergroup_member_not_exist'})
+    #return HttpResponse("grupa: " + groupname + "<br />User: " + username)
+    return usergroups(request, usergroup_modification={'groupname': groupname, 'modification': 'del'})
+    
+
 
 @login_required
 def git_repos(request, repository_modification=None, err=None):

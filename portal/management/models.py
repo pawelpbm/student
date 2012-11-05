@@ -153,6 +153,9 @@ class LdapUserGroup(ldapdb.models.Model):
     owner = LDAPCharField(db_column='ownerUid', max_length=20, verbose_name='Właściciel grupy')
     members = LDAPListField(db_column='memberUid', verbose_name='Członkowie grupy')
 
+    def remove_member(self, groupname, member):
+        self.objects.get(groupname).members.remove(member)
+
     def __str__(self):
         return self.name
 
