@@ -11,8 +11,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from misc import strip_polish_letters, find_primary_key
 from mail import send_confirmation_mail
 from misc import generate_confirmation_link
+from misc import hash_password
 from student.management.misc import list_user_repos
 from models import git_entry, repo_entry
+import urllib
 import os.path
 
 from django.core.urlresolvers import reverse
@@ -286,3 +288,47 @@ def registration(request):
         form = RegistrationForm()
 
     return render_to_response('registration.html',  {'form': form,}, context_instance=RequestContext(request))
+
+
+
+def exam_verification(request):
+    """View used by exams and examsmanagement applications to verify user login and password by sending jsonp answer"""
+    
+    callback = ''
+    isLogged = 'false'
+    #log = open('/tmp/student.log', 'w')
+    
+    if request.method == 'GET':       
+        login = request.GET['login']
+        login = urllib.unquote(login)
+        #login = urllib.unquote(urllib.quote(login.encode("utf8")))
+        password = request.GET['password']
+        password = urllib.unquote(password)
+        #log.write(login + '\n')
+        #log.write(password + '\n')
+        try:
+            callback = request.GET['callback']
+        except KeyError:
+            pass
+        
+        try:
+            l = ldap.open('localhost')
+            l.bind_s('uid=' + login + ',ou=users,dc=icis,dc=pcz,dc=pl', password)
+            isLogged = 'true'    
+            l.unbind_s()     
+        except:
+            pass
+    
+    if callback:
+        data = callback + '([{"response":"' + isLogged + '"}]);'
+    else:
+        data = '[{"response":"' + isLogged + '"}]'
+    #log.write(callback + '\n')
+    #log.flush()    
+    #log.close()
+    response = HttpResponse(data, content_type='text/javascript')
+    response['Content-Length'] = len(data)
+    response['Expires'] = '-1'
+    response['Cache-Control'] = 'no-cache'
+    response['Pragma'] = 'no-cache'
+    return response

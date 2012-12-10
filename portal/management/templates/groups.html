@@ -47,6 +47,7 @@
 	{% for groupMember in group.members %}
 		<tr><td>{{forloop.counter}}</td><td>{{ groupMember }}</td><td><a href="/account/groups/del/{{group.name}}/{{groupMember}}">Usuń</a></td></tr>
 	{% endfor %}
+		<tr><td> </td><td></td><td><a href="/account/groups/addMember/{{group.name}}">Dodaj użytkownika</a></td></tr>
 	</tbody>
 	</table>
 
